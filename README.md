@@ -1,17 +1,62 @@
-# mysuf_mobile
+# MySuF Mobile (Frontend)
 
-A new Flutter project.
+MySuF (Smart Subsidized Fuel Ecosystem) is a Flutter frontend for citizen-facing services such as quota monitoring, wallet, transaction history, and vehicle/family linking. This repository focuses on UI only and uses mock/local data for now.
 
-## Getting Started
+## Tech Stack
 
-This project is a starting point for a Flutter application.
+- Flutter
+- Riverpod
+- Go Router
+- Dio (reserved for API integration)
+- Shared Preferences
+- Flutter Secure Storage
+- Flutter ScreenUtil
+- Flutter SVG
+- Google Fonts
+- Flutter Animate
 
-A few resources to get you started if this is your first Flutter project:
+## Project Structure
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```
+lib/
+	core/
+	features/
+	routes/
+	shared/
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Each feature follows clean architecture:
+
+```
+features/<feature_name>/
+	data/
+	domain/
+	presentation/
+```
+
+## Setup
+
+1. Install Flutter (3.22+ recommended).
+2. Get packages:
+
+```
+flutter pub get
+```
+
+3. Run the app:
+
+```
+flutter run
+```
+
+## Notes
+
+- This project is UI-only. Backend/API integration will be added later.
+- All data is currently mocked in `lib/core/services/mock_api.dart`.
+- Navigation uses Go Router with a 5-tab bottom navigation layout.
+
+## Next Steps
+
+- Connect API endpoints with Dio.
+- Add real authentication and secure storage flows.
+- Expand models and validation rules for production.
