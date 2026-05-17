@@ -1,12 +1,43 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/camera_capture_screen.dart';
 import '../../../../shared/widgets/step_indicator.dart';
 
-class SelfieVerificationScreen extends StatelessWidget {
+class SelfieVerificationScreen extends StatefulWidget {
   const SelfieVerificationScreen({super.key});
+
+  @override
+  State<SelfieVerificationScreen> createState() =>
+      _SelfieVerificationScreenState();
+}
+
+class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
+  String? _selfiePhotoPath;
+
+  Future<void> _captureSelfie() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const CameraCaptureScreen(
+          title: 'Ambil Selfie',
+          actionLabel: 'Ambil Selfie',
+          helperText: 'Pegang KTP di area kartu, wajah di area lingkaran.',
+          lensDirection: CameraLensDirection.front,
+          overlayType: CameraOverlayType.selfieKtp,
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selfiePhotoPath = result;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +79,31 @@ class SelfieVerificationScreen extends StatelessWidget {
                         color: AppColors.softGray,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(
-                        Icons.face_retouching_natural,
-                        size: 52,
-                        color: AppColors.primaryRed,
-                      ),
+                      child: _selfiePhotoPath == null
+                          ? const Icon(
+                              Icons.face_retouching_natural,
+                              size: 52,
+                              color: AppColors.primaryRed,
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(
+                                File(_selfiePhotoPath!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
+                      child: ElevatedButton.icon(
+                        onPressed: _captureSelfie,
                         icon: const Icon(Icons.camera_alt_outlined),
                         label: const Text('Ambil Selfie'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
                   ],

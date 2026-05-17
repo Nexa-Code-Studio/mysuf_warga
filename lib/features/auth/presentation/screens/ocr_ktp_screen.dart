@@ -1,12 +1,42 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/camera_capture_screen.dart';
 import '../../../../shared/widgets/step_indicator.dart';
 
-class OcrKtpScreen extends StatelessWidget {
+class OcrKtpScreen extends StatefulWidget {
   const OcrKtpScreen({super.key});
+
+  @override
+  State<OcrKtpScreen> createState() => _OcrKtpScreenState();
+}
+
+class _OcrKtpScreenState extends State<OcrKtpScreen> {
+  String? _ktpPhotoPath;
+
+  Future<void> _captureKtpPhoto() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const CameraCaptureScreen(
+          title: 'Ambil Foto KTP',
+          actionLabel: 'Ambil Foto KTP',
+          helperText: 'Posisikan KTP di dalam bingkai dan pastikan fokus.',
+          lensDirection: CameraLensDirection.back,
+          overlayType: CameraOverlayType.ktp,
+        ),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _ktpPhotoPath = result;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,17 +78,25 @@ class OcrKtpScreen extends StatelessWidget {
                         color: AppColors.softGray,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(
-                        Icons.document_scanner_outlined,
-                        size: 48,
-                        color: AppColors.primaryRed,
-                      ),
+                      child: _ktpPhotoPath == null
+                          ? const Icon(
+                              Icons.document_scanner_outlined,
+                              size: 48,
+                              color: AppColors.primaryRed,
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.file(
+                                File(_ktpPhotoPath!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: _captureKtpPhoto,
                         icon: const Icon(Icons.camera_alt_outlined),
                         label: const Text('Ambil Foto KTP'),
                         style: ElevatedButton.styleFrom(
