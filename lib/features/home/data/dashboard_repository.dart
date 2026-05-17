@@ -1,5 +1,4 @@
 import '../../../core/services/mock_api.dart';
-import '../../../shared/models/quota.dart';
 import '../domain/dashboard_state.dart';
 
 class DashboardRepository {

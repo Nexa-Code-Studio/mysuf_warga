@@ -65,6 +65,33 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               SectionHeader(
+                title: 'Transaksi Terkini',
+                actionLabel: 'Semua',
+                onAction: () => context.go('/transactions'),
+              ),
+              const SizedBox(height: 12),
+              const _RecentTransactionCard(
+                title: 'Pertalite - SPBU 31.001',
+                subtitle: 'Hari ini, 08:24',
+                amount: '- Rp 150.000',
+                amountColor: AppColors.primaryRed,
+              ),
+              const SizedBox(height: 10),
+              const _RecentTransactionCard(
+                title: 'Pertamax - SPBU 31.002',
+                subtitle: 'Kemarin, 19:05',
+                amount: '- Rp 280.000',
+                amountColor: AppColors.primaryRed,
+              ),
+              const SizedBox(height: 10),
+              const _RecentTransactionCard(
+                title: 'Top Up Dompet',
+                subtitle: 'Kemarin, 12:45',
+                amount: '+ Rp 500.000',
+                amountColor: AppColors.success,
+              ),
+              const SizedBox(height: 24),
+              SectionHeader(
                 title: 'Status Risiko',
                 actionLabel: 'Detail',
                 onAction: () => context.go('/home/risk'),
@@ -91,55 +118,44 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return profile.when(
       data: (data) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.primaryRed,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Selamat Pagi',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      data.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    StatusPill(
-                      label: data.isEligible ? 'Eligible' : 'Review',
-                      color: data.isEligible
-                          ? AppColors.success
-                          : AppColors.warning,
-                      backgroundColor: Colors.white.withOpacity(0.15),
-                    ),
-                  ],
-                ),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Selamat Pagi',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    data.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  StatusPill(
+                    label: data.isEligible ? 'Eligible' : 'Review',
+                    color:
+                        data.isEligible ? AppColors.success : AppColors.warning,
+                    backgroundColor: AppColors.softGray,
+                  ),
+                ],
               ),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                child: const Icon(Icons.notifications_none, color: Colors.white),
-              ),
-            ],
-          ),
+            ),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: AppColors.softGray,
+              child:
+                  const Icon(Icons.notifications_none, color: AppColors.textPrimary),
+            ),
+          ],
         );
       },
       loading: () => const LoadingSkeleton(height: 120),
@@ -156,75 +172,126 @@ class _QuotaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.zero,
+      color: AppColors.primaryRed,
+      borderRadius: BorderRadius.circular(24),
       onTap: () => context.go('/home/quota'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Sisa Kuota Bulanan',
-                style: Theme.of(context).textTheme.titleSmall,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              top: -40,
+              child: _PatternCircle(
+                size: 140,
+                color: Colors.white.withOpacity(0.15),
               ),
-              const Spacer(),
-              Text(
-                quota.periodLabel,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.primaryRed,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                quota.remainingQuota.toString(),
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '/ ${formatLiters(quota.monthlyQuota)}',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: quota.progress,
-              minHeight: 8,
-              backgroundColor: AppColors.softGray,
-              color: AppColors.primaryRed,
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: quota.fuelTypes
-                .map(
-                  (fuel) => Chip(
-                    avatar: const Icon(
-                      Icons.local_gas_station,
-                      color: AppColors.primaryRed,
-                      size: 16,
-                    ),
-                    label: Text(fuel),
+            Positioned(
+              left: 140,
+              bottom: -60,
+              child: _PatternCircle(
+                size: 160,
+                color: Colors.white.withOpacity(0.12),
+              ),
+            ),
+            Positioned(
+              left: -40,
+              bottom: 40,
+              child: _PatternCircle(
+                size: 90,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Sisa Kuota Bulanan',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(color: Colors.white),
+                      ),
+                      const Spacer(),
+                      Text(
+                        quota.periodLabel,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                    ],
                   ),
-                )
-                .toList(),
-          ),
-        ],
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        quota.remainingQuota.toString(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .displaySmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '/ ${formatLiters(quota.monthlyQuota)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: quota.progress,
+                      minHeight: 8,
+                      backgroundColor: Colors.white.withOpacity(0.25),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: quota.fuelTypes
+                        .map(
+                          (fuel) => Chip(
+                            avatar: const Icon(
+                              Icons.local_gas_station,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            label: Text(
+                              fuel,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            side: BorderSide(
+                              color: Colors.white.withOpacity(0.35),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -386,6 +453,89 @@ class _RiskCard extends StatelessWidget {
           ),
           const Icon(Icons.chevron_right),
         ],
+      ),
+    );
+  }
+}
+
+class _RecentTransactionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String amount;
+  final Color amountColor;
+
+  const _RecentTransactionCard({
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.amountColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.softGray,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.receipt_long,
+                color: AppColors.primaryRed),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            amount,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: amountColor,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PatternCircle extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _PatternCircle({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 2),
+        color: Colors.transparent,
       ),
     );
   }
