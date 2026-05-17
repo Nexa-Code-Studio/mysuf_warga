@@ -107,6 +107,31 @@ class AddVehicleScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF5E5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD8A8)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.business_outlined,
+                        color: AppColors.warning),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Untuk kategori komersial, perlu verifikasi akun perusahaan. Anda cukup isi NIK, nomor plat, dan STNK; data lain dilengkapi perusahaan.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(14),
@@ -120,7 +145,7 @@ class AddVehicleScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Maksimal 2 kendaraan per KK. Pastikan data sesuai STNK.',
+                        'Maksimal 2 kendaraan per KK. Kendaraan cukup didaftarkan sekali per keluarga dan tercatat siapa yang menginput.',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall

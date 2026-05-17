@@ -33,7 +33,7 @@ class FamilyListScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Maksimal 2 kendaraan per KK. Kuota dihitung berdasarkan kendaraan terdaftar.',
+                      'Anggota keluarga otomatis terhubung lewat KK yang sama. Kendaraan cukup didaftarkan sekali per keluarga.',
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
@@ -127,17 +127,13 @@ class _FamilyTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: member.isEligible
-                    ? const Color(0xFFE9F9EF)
-                    : const Color(0xFFFFF5E5),
+                color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                member.isEligible ? 'Eligible' : 'Review',
+                'Tertaut KK',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: member.isEligible
-                          ? AppColors.success
-                          : AppColors.warning,
+                      color: AppColors.primaryRed,
                       fontWeight: FontWeight.w700,
                     ),
               ),

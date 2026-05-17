@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/formatters.dart';
 import '../../../../shared/models/quota.dart';
 import '../../../../shared/providers/mock_providers.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -13,13 +11,41 @@ import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  final bool showVerifyNotice;
+
+  const HomeScreen({super.key, this.showVerifyNotice = false});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late bool _showVerifyNotice;
+  bool _didShowVerifyPopup = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _showVerifyNotice = widget.showVerifyNotice;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_showVerifyNotice && !_didShowVerifyPopup) {
+      _didShowVerifyPopup = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showVerifyPopup(context);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final quota = ref.watch(quotaProvider);
+    final isVerified = false;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -34,6 +60,12 @@ class HomeScreen extends ConsumerWidget {
             children: [
               _Header(profile: profile),
               const SizedBox(height: 16),
+              if (!isVerified) ...[
+                _VerifyInlineCard(
+                  onVerify: () => context.go('/register?step=2'),
+                ),
+                const SizedBox(height: 16),
+              ],
               quota.when(
                 data: (data) => _QuotaCard(quota: data),
                 loading: () => const LoadingSkeleton(height: 170),
@@ -140,10 +172,9 @@ class _Header extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 12),
-                  StatusPill(
-                    label: data.isEligible ? 'Eligible' : 'Review',
-                    color:
-                        data.isEligible ? AppColors.success : AppColors.warning,
+                  const StatusPill(
+                    label: 'Perlu Verifikasi',
+                    color: AppColors.warning,
                     backgroundColor: AppColors.softGray,
                   ),
                 ],
@@ -162,6 +193,110 @@ class _Header extends StatelessWidget {
       error: (_, __) => const SizedBox.shrink(),
     );
   }
+}
+
+class _VerifyInlineCard extends StatelessWidget {
+  final VoidCallback onVerify;
+
+  const _VerifyInlineCard({required this.onVerify});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline, color: AppColors.warning),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Lengkapi data kendaraan, pajak, dan verifikasi agar kuota subsidi aktif.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: onVerify,
+              child: const Text('Verifikasi Sekarang'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _showVerifyPopup(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, color: AppColors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Registrasi berhasil',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close),
+                    splashRadius: 18,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Akun Anda berhasil dibuat dan tervalidasi oleh sistem. Lanjutkan verifikasi untuk melihat kuota subsidi.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    context.go('/register?step=2');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Verifikasi Sekarang'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _QuotaCard extends StatelessWidget {
@@ -219,73 +354,27 @@ class _QuotaCard extends StatelessWidget {
                             ?.copyWith(color: Colors.white),
                       ),
                       const Spacer(),
-                      Text(
-                        quota.periodLabel,
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
+                      const Icon(Icons.lock_outline, color: Colors.white70),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        quota.remainingQuota.toString(),
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '/ ${formatLiters(quota.monthlyQuota)}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.white70),
-                      ),
-                    ],
+                  Text(
+                    '--',
+                    style: Theme.of(context)
+                        .textTheme
+                        .displaySmall
+                        ?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
                   ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: quota.progress,
-                      minHeight: 8,
-                      backgroundColor: Colors.white.withOpacity(0.25),
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: quota.fuelTypes
-                        .map(
-                          (fuel) => Chip(
-                            avatar: const Icon(
-                              Icons.local_gas_station,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            label: Text(
-                              fuel,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.white.withOpacity(0.2),
-                            side: BorderSide(
-                              color: Colors.white.withOpacity(0.35),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Lengkapi verifikasi untuk melihat kuota subsidi Anda.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.white70),
                   ),
                 ],
               ),
