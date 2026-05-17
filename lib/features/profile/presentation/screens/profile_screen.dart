@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -100,21 +101,21 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             const _MenuTile(
               title: 'Verifikasi Identitas',
-              subtitle: 'KTP & Selfie diverifikasi',
-              trailing: 'Aktif',
+              subtitle: 'Lengkapi KTP & selfie untuk verifikasi',
+              trailing: 'Proses',
               icon: Icons.verified_user_outlined,
             ),
             const SizedBox(height: 10),
             const _MenuTile(
               title: 'Anggota Keluarga',
-              subtitle: '3 anggota - KK terdaftar',
+              subtitle: 'Otomatis dari KK yang sama',
               trailing: 'Kelola',
               icon: Icons.group_outlined,
             ),
             const SizedBox(height: 10),
             const _MenuTile(
               title: 'Kendaraan Saya',
-              subtitle: '2 kendaraan terdaftar',
+              subtitle: 'Input kendaraan cukup sekali per KK',
               trailing: 'Detail',
               icon: Icons.directions_car_outlined,
             ),
@@ -133,6 +134,19 @@ class ProfileScreen extends ConsumerWidget {
               subtitle: 'Pengingat kuota dan transaksi',
               trailing: 'Atur',
               icon: Icons.notifications_none,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/login'),
+                icon: const Icon(Icons.logout),
+                label: const Text('Keluar Akun'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger),
+                ),
+              ),
             ),
           ],
         ),

@@ -25,6 +25,25 @@ class QuotaScreen extends ConsumerWidget {
               return Column(
                 children: [
                   AppCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: AppColors.primaryRed),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Kuota dan status eligible tampil setelah verifikasi. Perhitungan dilakukan oleh sistem dan tidak ditampilkan di aplikasi.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AppCard(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

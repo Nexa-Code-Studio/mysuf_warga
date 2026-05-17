@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../shared/widgets/app_scaffold.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/nik_kk_validation_screen.dart';
 import '../features/auth/presentation/screens/onboarding_screen.dart';
-import '../features/auth/presentation/screens/ocr_ktp_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
-import '../features/auth/presentation/screens/selfie_verification_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/vehicles/presentation/screens/add_vehicle_screen.dart';
@@ -54,29 +51,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/register',
         pageBuilder: (context, state) => _fadePage(
           state,
-          const RegisterScreen(),
+          RegisterScreen(
+            initialStep: int.tryParse(
+                  state.uri.queryParameters['step'] ?? '1',
+                ) ??
+                1,
+          ),
         ),
       ),
       GoRoute(
         path: '/auth/ocr-ktp',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const OcrKtpScreen(),
-        ),
+        redirect: (_, __) => '/register?step=2',
       ),
       GoRoute(
         path: '/auth/selfie',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const SelfieVerificationScreen(),
-        ),
+        redirect: (_, __) => '/register?step=3',
       ),
       GoRoute(
         path: '/auth/nik-kk',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const NikKkValidationScreen(),
-        ),
+        redirect: (_, __) => '/register?step=3',
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -86,7 +79,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/home',
             pageBuilder: (context, state) => _fadePage(
               state,
-              const HomeScreen(),
+              HomeScreen(
+                showVerifyNotice: state.uri.queryParameters['verify'] == '1',
+              ),
             ),
             routes: [
               GoRoute(
