@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../shared/widgets/app_scaffold.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/logout_processing_screen.dart';
 import '../features/auth/presentation/screens/onboarding_screen.dart';
+import '../features/auth/presentation/screens/registration_processing_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
+import '../features/verification/presentation/screens/subsidy_verification_screen.dart';
 import '../features/vehicles/presentation/screens/add_vehicle_screen.dart';
 import '../features/vehicles/presentation/screens/vehicle_list_screen.dart';
 import '../features/family/presentation/screens/family_list_screen.dart';
@@ -57,6 +60,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ) ??
                 1,
           ),
+        ),
+      ),
+      GoRoute(
+        path: '/register/processing',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const RegistrationProcessingScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/logout-processing',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const LogoutProcessingScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/verification',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const SubsidyVerificationScreen(),
         ),
       ),
       GoRoute(

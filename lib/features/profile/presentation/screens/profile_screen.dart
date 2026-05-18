@@ -99,11 +99,12 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             const SectionHeader(title: 'Akun & Identitas'),
             const SizedBox(height: 12),
-            const _MenuTile(
+            _MenuTile(
               title: 'Verifikasi Identitas',
               subtitle: 'Lengkapi KTP & selfie untuk verifikasi',
               trailing: 'Proses',
               icon: Icons.verified_user_outlined,
+              onTap: () => context.go('/verification'),
             ),
             const SizedBox(height: 10),
             const _MenuTile(
@@ -139,7 +140,7 @@ class ProfileScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => context.go('/login'),
+                onPressed: () => context.go('/logout-processing'),
                 icon: const Icon(Icons.logout),
                 label: const Text('Keluar Akun'),
                 style: OutlinedButton.styleFrom(
@@ -202,17 +203,20 @@ class _MenuTile extends StatelessWidget {
   final String subtitle;
   final String trailing;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const _MenuTile({
     required this.title,
     required this.subtitle,
     required this.trailing,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      onTap: onTap,
       child: Row(
         children: [
           Container(

@@ -62,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 16),
               if (!isVerified) ...[
                 _VerifyInlineCard(
-                  onVerify: () => context.go('/register?step=2'),
+                  onVerify: () => context.go('/verification'),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -282,7 +282,7 @@ void _showVerifyPopup(BuildContext context) {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    context.go('/register?step=2');
+                    context.go('/verification');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryRed,
