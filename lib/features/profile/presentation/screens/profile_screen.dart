@@ -24,6 +24,7 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             profile.when(
               data: (data) => AppCard(
+                onTap: () => context.go('/profile/detail'),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -60,10 +61,7 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.chevron_right),
-                    ),
+                    const Icon(Icons.chevron_right),
                   ],
                 ),
               ),
@@ -72,26 +70,29 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             profile.when(
-              data: (data) => Row(
-                children: [
-                  _MetricCard(
-                    label: 'Saldo',
-                    value: formatCurrencyIdr(data.walletBalance),
-                    accentColor: AppColors.primaryRed,
-                  ),
-                  const SizedBox(width: 12),
-                  _MetricCard(
-                    label: 'Kuota Sisa',
-                    value: '${data.quotaRemaining} L',
-                    accentColor: AppColors.primaryRed,
-                  ),
-                  const SizedBox(width: 12),
-                  _MetricCard(
-                    label: 'Kendaraan',
-                    value: '${data.vehiclesCount} Unit',
-                    accentColor: AppColors.primaryRed,
-                  ),
-                ],
+              data: (data) => AppCard(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _MetricCard(
+                      label: 'Saldo',
+                      value: formatCurrencyIdr(data.walletBalance),
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                    const SizedBox(width: 12),
+                    _MetricCard(
+                      label: 'Kuota Sisa',
+                      value: '${data.quotaRemaining} L',
+                      icon: Icons.local_gas_station_outlined,
+                    ),
+                    const SizedBox(width: 12),
+                    _MetricCard(
+                      label: 'Kendaraan',
+                      value: '${data.vehiclesCount} Unit',
+                      icon: Icons.directions_car_outlined,
+                    ),
+                  ],
+                ),
               ),
               loading: () => const LoadingSkeleton(height: 90),
               error: (_, __) => const SizedBox.shrink(),
@@ -102,39 +103,45 @@ class ProfileScreen extends ConsumerWidget {
             _MenuTile(
               title: 'Verifikasi Identitas',
               subtitle: 'Lengkapi KTP & selfie untuk verifikasi',
-              trailing: 'Proses',
               icon: Icons.verified_user_outlined,
               onTap: () => context.go('/verification'),
             ),
             const SizedBox(height: 10),
-            const _MenuTile(
+            _MenuTile(
               title: 'Anggota Keluarga',
               subtitle: 'Otomatis dari KK yang sama',
-              trailing: 'Kelola',
               icon: Icons.group_outlined,
+              onTap: () => context.go('/vehicles/family'),
             ),
             const SizedBox(height: 10),
-            const _MenuTile(
+            _MenuTile(
               title: 'Kendaraan Saya',
               subtitle: 'Input kendaraan cukup sekali per KK',
-              trailing: 'Detail',
               icon: Icons.directions_car_outlined,
+              onTap: () => context.go('/vehicles'),
             ),
             const SizedBox(height: 20),
             const SectionHeader(title: 'Keamanan'),
             const SizedBox(height: 12),
-            const _MenuTile(
+            _MenuTile(
               title: 'Status Risiko AI',
               subtitle: 'Skor 72 - Dalam Review',
-              trailing: 'Review',
               icon: Icons.shield_outlined,
+              onTap: () => context.go('/home/risk'),
             ),
             const SizedBox(height: 10),
-            const _MenuTile(
+            _MenuTile(
               title: 'Pengaturan Notifikasi',
               subtitle: 'Pengingat kuota dan transaksi',
-              trailing: 'Atur',
               icon: Icons.notifications_none,
+              onTap: () => context.go('/profile/notifications'),
+            ),
+            const SizedBox(height: 10),
+            _MenuTile(
+              title: 'Pusat Panduan',
+              subtitle: 'FAQ, panduan, dan bantuan aplikasi',
+              icon: Icons.help_outline,
+              onTap: () => context.go('/profile/help'),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -159,40 +166,45 @@ class ProfileScreen extends ConsumerWidget {
 class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
-  final Color accentColor;
+  final IconData icon;
 
   const _MetricCard({
     required this.label,
     required this.value,
-    required this.accentColor,
+    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: AppCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: accentColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-              textAlign: TextAlign.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1F3),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+            child: Icon(icon, color: AppColors.primaryRed, size: 18),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColors.primaryRed,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -201,14 +213,12 @@ class _MetricCard extends StatelessWidget {
 class _MenuTile extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String trailing;
   final IconData icon;
   final VoidCallback? onTap;
 
   const _MenuTile({
     required this.title,
     required this.subtitle,
-    required this.trailing,
     required this.icon,
     this.onTap,
   });
@@ -250,20 +260,7 @@ class _MenuTile extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF1F3),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              trailing,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.primaryRed,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
+          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
         ],
       ),
     );

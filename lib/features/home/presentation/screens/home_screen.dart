@@ -83,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               SectionHeader(
                 title: 'SPBU Terdekat',
                 actionLabel: 'Lihat Semua',
-                onAction: () {},
+                onAction: () => context.go('/home/spbu'),
               ),
               const SizedBox(height: 12),
               const _StationCard(
@@ -123,10 +123,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 amountColor: AppColors.success,
               ),
               const SizedBox(height: 24),
-              SectionHeader(
+              const SectionHeader(
                 title: 'Status Risiko',
-                actionLabel: 'Detail',
-                onAction: () => context.go('/home/risk'),
               ),
               const SizedBox(height: 12),
               const _RiskCard(),
@@ -180,11 +178,15 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.softGray,
-              child:
-                  const Icon(Icons.notifications_none, color: AppColors.textPrimary),
+            InkWell(
+              onTap: () => context.push('/notifications'),
+              borderRadius: BorderRadius.circular(20),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.softGray,
+                child: const Icon(Icons.notifications_none,
+                    color: AppColors.textPrimary),
+              ),
             ),
           ],
         );

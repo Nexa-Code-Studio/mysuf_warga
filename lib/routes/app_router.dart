@@ -10,16 +10,20 @@ import '../features/auth/presentation/screens/registration_processing_screen.dar
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
+import '../features/home/presentation/screens/spbu_nearby_screen.dart';
 import '../features/verification/presentation/screens/subsidy_verification_screen.dart';
 import '../features/vehicles/presentation/screens/add_vehicle_screen.dart';
+import '../features/vehicles/presentation/screens/vehicle_detail_screen.dart';
 import '../features/vehicles/presentation/screens/vehicle_list_screen.dart';
 import '../features/family/presentation/screens/family_list_screen.dart';
+import '../features/notifications/presentation/screens/notifications_screen.dart';
 import '../features/quota/presentation/screens/quota_screen.dart';
 import '../features/wallet/presentation/screens/topup_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../features/transactions/presentation/screens/transaction_history_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/risk/presentation/screens/risk_screen.dart';
+import '../shared/models/vehicle.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -84,6 +88,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/notifications',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const NotificationsScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/auth/ocr-ktp',
         redirect: (_, __) => '/register?step=2',
       ),
@@ -109,6 +120,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
             routes: [
               GoRoute(
+                path: 'spbu',
+                pageBuilder: (context, state) => _fadePage(
+                  state,
+                  const SpbuNearbyScreen(),
+                ),
+              ),
+              GoRoute(
                 path: 'quota',
                 pageBuilder: (context, state) => _fadePage(
                   state,
@@ -131,6 +149,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               const VehicleListScreen(),
             ),
             routes: [
+              GoRoute(
+                path: 'detail',
+                pageBuilder: (context, state) => _fadePage(
+                  state,
+                  VehicleDetailScreen(
+                    vehicle: state.extra! as Vehicle,
+                  ),
+                ),
+              ),
               GoRoute(
                 path: 'add',
                 pageBuilder: (context, state) => _fadePage(
