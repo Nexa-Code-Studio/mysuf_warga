@@ -22,9 +22,10 @@ class QuotaScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           child: quota.when(
             data: (data) {
-              return Column(
+              return ListView(
                 children: [
                   AppCard(
+                    color: const Color(0xFFFFF4F5),
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
@@ -48,12 +49,35 @@ class QuotaScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Kuota Bulanan',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Kuota Bulanan',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDECEC),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Aktif',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: AppColors.primaryRed,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -67,7 +91,7 @@ class QuotaScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'dari ${formatLiters(data.monthlyQuota)}',
+                              'tersisa dari ${formatLiters(data.monthlyQuota)}',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -111,6 +135,7 @@ class QuotaScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
+                          runSpacing: 8,
                           children: data.fuelTypes
                               .map(
                                 (fuel) => Chip(
@@ -119,7 +144,17 @@ class QuotaScreen extends ConsumerWidget {
                                     size: 16,
                                     color: AppColors.primaryRed,
                                   ),
-                                  label: Text(fuel),
+                                  label: Text(
+                                    fuel,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  backgroundColor: AppColors.softGray,
                                 ),
                               )
                               .toList(),

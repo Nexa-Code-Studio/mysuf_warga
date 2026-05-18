@@ -10,10 +10,19 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
+    final location = GoRouterState.of(context).uri.path;
+    const mainTabs = {
+      '/home',
+      '/vehicles',
+      '/wallet',
+      '/transactions',
+      '/profile',
+    };
+    final showBottomNav = mainTabs.contains(location);
     return Scaffold(
       body: child,
-      bottomNavigationBar: AppBottomNav(location: location),
+      bottomNavigationBar:
+          showBottomNav ? AppBottomNav(location: location) : null,
     );
   }
 }

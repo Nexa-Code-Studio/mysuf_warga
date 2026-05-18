@@ -33,7 +33,6 @@ class VehicleListScreen extends ConsumerWidget {
           children: [
             const SectionHeader(
               title: 'Kendaraan Terdaftar',
-              actionLabel: 'Tambah',
             ),
             const SizedBox(height: 12),
             vehicles.when(
@@ -62,6 +61,7 @@ class VehicleListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             AppCard(
+              onTap: () => context.go('/vehicles/family'),
               child: Row(
                 children: [
                   const Icon(Icons.group_outlined, color: AppColors.primaryRed),
@@ -75,10 +75,7 @@ class VehicleListScreen extends ConsumerWidget {
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => context.go('/vehicles/family'),
-                    icon: const Icon(Icons.chevron_right),
-                  ),
+                  const Icon(Icons.chevron_right),
                 ],
               ),
             ),
@@ -99,6 +96,7 @@ class _VehicleTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
+        onTap: () => context.go('/vehicles/detail', extra: vehicle),
         child: Row(
           children: [
             Container(

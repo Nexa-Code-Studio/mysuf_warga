@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             });
                             return;
                           }
-                          context.go('/home?verify=1');
+                          context.go('/home');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryRed,

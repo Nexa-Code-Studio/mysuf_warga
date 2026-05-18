@@ -9,11 +9,39 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 
-class TransactionHistoryScreen extends ConsumerWidget {
+class TransactionHistoryScreen extends ConsumerStatefulWidget {
   const TransactionHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TransactionHistoryScreen> createState() =>
+      _TransactionHistoryScreenState();
+}
+
+class _TransactionHistoryScreenState
+    extends ConsumerState<TransactionHistoryScreen> {
+  String _query = '';
+  String _filter = 'Semua';
+
+  List<TransactionItem> _applyFilter(List<TransactionItem> items) {
+    final query = _query.trim().toLowerCase();
+    return items.where((item) {
+      final matchesQuery = query.isEmpty ||
+          item.title.toLowerCase().contains(query) ||
+          item.subtitle.toLowerCase().contains(query);
+
+      final matchesFilter = switch (_filter) {
+        'Berhasil' => item.status == TransactionStatus.success,
+        'Gagal' => item.status == TransactionStatus.failed,
+        'Top Up' => item.amount > 0,
+        _ => true,
+      };
+
+      return matchesQuery && matchesFilter;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final transactions = ref.watch(transactionsProvider);
 
     return Scaffold(
@@ -23,6 +51,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           children: [
             TextField(
+              onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
                 hintText: 'Cari transaksi atau SPBU...',
                 prefixIcon: const Icon(Icons.search),
@@ -35,29 +64,60 @@ class TransactionHistoryScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: const [
-                _FilterChip(label: 'Semua', isSelected: true),
-                SizedBox(width: 8),
-                _FilterChip(label: 'Berhasil'),
-                SizedBox(width: 8),
-                _FilterChip(label: 'Gagal'),
-                SizedBox(width: 8),
-                _FilterChip(label: 'Top Up'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final label in const ['Semua', 'Berhasil', 'Gagal', 'Top Up'])
+                  _FilterChip(
+                    label: label,
+                    isSelected: _filter == label,
+                    onTap: () => setState(() => _filter = label),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
             transactions.when(
-              data: (items) => Column(
-                children: items
-                    .map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _TransactionTile(item: item),
-                      ),
-                    )
-                    .toList(),
-              ),
+              data: (items) {
+                final filteredItems = _applyFilter(items);
+                if (filteredItems.isEmpty) {
+                  return AppCard(
+                    child: Column(
+                      children: [
+                        const Icon(Icons.search_off,
+                            color: AppColors.textSecondary),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Transaksi tidak ditemukan',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Ubah kata kunci atau filter untuk melihat transaksi lain.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return Column(
+                  children: filteredItems
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _TransactionTile(item: item),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
               loading: () => const LoadingSkeleton(height: 220),
               error: (_, __) => ErrorState(
                 title: 'Gagal memuat transaksi',
@@ -75,23 +135,32 @@ class TransactionHistoryScreen extends ConsumerWidget {
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final VoidCallback onTap;
 
-  const _FilterChip({required this.label, this.isSelected = false});
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.primaryRed : AppColors.softGray,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryRed : AppColors.softGray,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
       ),
     );
   }

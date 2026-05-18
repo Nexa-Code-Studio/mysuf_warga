@@ -25,6 +25,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   String? _ktpPhotoPath;
   String? _selfiePhotoPath;
+  bool _ktpRequiredError = false;
+  bool _selfieRequiredError = false;
   final _dataFormKey = GlobalKey<FormState>();
   bool _autoValidateData = false;
   final _nameController = TextEditingController();
@@ -72,6 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (result != null && mounted) {
       setState(() {
         _ktpPhotoPath = result;
+        _ktpRequiredError = false;
       });
     }
   }
@@ -91,6 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (result != null && mounted) {
       setState(() {
         _selfiePhotoPath = result;
+        _selfieRequiredError = false;
       });
     }
   }
@@ -170,8 +174,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () {
+                                      if (_currentStep == 2) {
+                                        if (_ktpPhotoPath == null) {
+                                          setState(() {
+                                            _ktpRequiredError = true;
+                                          });
+                                          return;
+                                        }
+                                      }
+
                                       if (_currentStep == 3) {
-                                        context.go('/home?verify=1');
+                                        if (_selfiePhotoPath == null) {
+                                          setState(() {
+                                            _selfieRequiredError = true;
+                                          });
+                                          return;
+                                        }
+                                        context.go('/register/processing');
                                       } else {
                                         _goToStep(_currentStep + 1);
                                       }
@@ -451,6 +470,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
+        if (_ktpRequiredError) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Foto KTP wajib diisi.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: AppColors.danger),
+          ),
+        ],
         const SizedBox(height: 16),
         _InfoCard(
           icon: Icons.info_outline,
@@ -533,6 +562,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
+        if (_selfieRequiredError) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Foto selfie wajib diisi.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: AppColors.danger),
+          ),
+        ],
         const SizedBox(height: 16),
         _InfoCard(
           icon: Icons.info_outline,

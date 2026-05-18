@@ -18,9 +18,6 @@ class FamilyListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Anggota Keluarga'),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
-        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -65,12 +62,6 @@ class FamilyListScreen extends ConsumerWidget {
                 message: 'Tarik untuk memuat ulang daftar keluarga.',
                 onRetry: () => ref.invalidate(familyProvider),
               ),
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Tambah Anggota Keluarga'),
             ),
           ],
         ),
@@ -127,13 +118,19 @@ class _FamilyTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: member.isEligible
+                    ? const Color(0xFFE9F9EF)
+                    : const Color(0xFFFFF5E5),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                'Tertaut KK',
+                member.isEligible
+                    ? 'KTP Terverifikasi'
+                    : 'Belum Registrasi KTP',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.primaryRed,
+                      color: member.isEligible
+                          ? AppColors.success
+                          : AppColors.warning,
                       fontWeight: FontWeight.w700,
                     ),
               ),
