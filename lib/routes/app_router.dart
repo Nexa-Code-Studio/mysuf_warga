@@ -22,6 +22,9 @@ import '../features/wallet/presentation/screens/topup_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../features/transactions/presentation/screens/transaction_history_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
+import '../features/profile/presentation/screens/profile_detail_screen.dart';
+import '../features/profile/presentation/screens/notification_settings_screen.dart';
+import '../features/profile/presentation/screens/help_center_screen.dart';
 import '../features/risk/presentation/screens/risk_screen.dart';
 import '../shared/models/vehicle.dart';
 
@@ -203,6 +206,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               state,
               const ProfileScreen(),
             ),
+            routes: [
+              GoRoute(
+                path: 'detail',
+                pageBuilder: (context, state) => _fadePage(
+                  state,
+                  const ProfileDetailScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'notifications',
+                pageBuilder: (context, state) => _fadePage(
+                  state,
+                  const NotificationSettingsScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'help',
+                pageBuilder: (context, state) => _fadePage(
+                  state,
+                  const HelpCenterScreen(),
+                ),
+              ),
+            ],
           ),
         ],
       ),

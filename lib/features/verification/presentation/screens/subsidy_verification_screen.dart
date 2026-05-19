@@ -166,7 +166,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
             ImageSource.camera,
             (path) => _vehiclePhotoPath = path,
           ),
-          onPickVehicleYear: _pickVehicleYear,
           onCategoryChanged: (value) {
             if (value == null) {
               return;
@@ -222,9 +221,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
         ),
         VerificationHouseholdStep(
           householdVehicles: _householdVehicles,
-          sharedVehicle: _sharedVehicle,
-          members: _members,
-          controllers: _controllers,
           onHouseholdChanged: (value) {
             if (value == null) {
               return;
@@ -233,6 +229,9 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
               _householdVehicles = value;
             });
           },
+          sharedVehicle: _sharedVehicle,
+          members: _members,
+          controllers: _controllers,
           onSharedChanged: (value) {
             setState(() {
               _sharedVehicle = value;
@@ -354,23 +353,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
         '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
     setState(() {
       _controllers.dob.text = value;
-    });
-  }
-
-  Future<void> _pickVehicleYear() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year, 1, 1),
-      firstDate: DateTime(now.year - 40),
-      lastDate: DateTime(now.year + 1),
-      initialDatePickerMode: DatePickerMode.year,
-    );
-    if (picked == null) {
-      return;
-    }
-    setState(() {
-      _controllers.vehicleYear.text = picked.year.toString();
     });
   }
 
@@ -505,18 +487,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
       message = 'Nomor polisi wajib diisi.';
     } else if (_controllers.stnkNumber.text.trim().isEmpty) {
       message = 'Nomor STNK wajib diisi.';
-    } else if (_controllers.brand.text.trim().isEmpty) {
-      message = 'Merk kendaraan wajib diisi.';
-    } else if (_controllers.vehicleType.text.trim().isEmpty) {
-      message = 'Tipe kendaraan wajib diisi.';
-    } else if (_controllers.vehicleYear.text.trim().isEmpty) {
-      message = 'Tahun kendaraan wajib diisi.';
-    } else if (_controllers.vehicleColor.text.trim().isEmpty) {
-      message = 'Warna kendaraan wajib diisi.';
-    } else if (_controllers.vehicleCc.text.trim().isEmpty) {
-      message = 'Kapasitas mesin wajib diisi.';
-    } else if (_controllers.taxValue.text.trim().isEmpty) {
-      message = 'Nilai pajak tahunan wajib diisi.';
     } else if (_ownershipStatus == 'Milik Perusahaan' &&
         _controllers.companyName.text.trim().isEmpty) {
       message = 'Nama perusahaan wajib diisi.';

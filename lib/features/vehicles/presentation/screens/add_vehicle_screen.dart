@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../verification/presentation/screens/steps/verification_form_state.dart';
 import '../../../verification/presentation/screens/steps/verification_form_widgets.dart';
+import '../../../verification/presentation/screens/steps/verification_step_additional_docs.dart';
+import '../../../verification/presentation/screens/steps/verification_step_review.dart';
+import '../../../verification/presentation/screens/steps/verification_step_usage.dart';
+import '../../../verification/presentation/screens/steps/verification_step_vehicle.dart';
 
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key});
@@ -14,39 +21,29 @@ class AddVehicleScreen extends StatefulWidget {
 
 class _AddVehicleScreenState extends State<AddVehicleScreen> {
   int _currentStep = 0;
+  String _vehicleCategory = 'Sepeda Motor';
+  String _ownershipStatus = 'Milik Pribadi';
+  String _usagePurpose = 'Pribadi (Non-Komersial)';
+  String _businessCategory = 'Non-komersial';
+  String _usageIntensity = 'Normal';
   bool _sharedVehicle = false;
   bool _agreeData = false;
-  bool _agreeUsage = false;
-  bool _agreeRules = false;
-  bool _showAgreementError = false;
+  bool _agreeRisk = false;
+  bool _agreeAi = false;
 
-  String _linkingSource = 'KTP';
-  String _ownership = 'Pribadi';
-  String _vehicleType = 'Roda 2';
+  final _controllers = VerificationFormControllers();
+  final _picker = ImagePicker();
 
-  String? _stnkPhoto;
-  String? _platePhoto;
-  String? _extraDoc;
-
-  final _plateController = TextEditingController();
-  final _stnkController = TextEditingController();
-  final _brandController = TextEditingController();
-  final _typeController = TextEditingController();
-  final _yearController = TextEditingController();
-  final _colorController = TextEditingController();
-  final _engineController = TextEditingController();
-  final _companyController = TextEditingController();
+  String? _stnkPhotoPath;
+  String? _vehiclePhotoPath;
+  String? _businessDocPath;
+  String? _driverDocPath;
+  String? _companyDocPath;
+  String? _farmerDocPath;
 
   @override
   void dispose() {
-    _plateController.dispose();
-    _stnkController.dispose();
-    _brandController.dispose();
-    _typeController.dispose();
-    _yearController.dispose();
-    _colorController.dispose();
-    _engineController.dispose();
-    _companyController.dispose();
+    _controllers.dispose();
     super.dispose();
   }
 
@@ -105,93 +102,343 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     );
   }
 
+  bool get _isLastStep => _currentStep == _stepWidgets.length - 1;
+
   List<String> get _stepTitles => const [
         'Linking Kendaraan',
-        'Kepemilikan',
+        'Kepemilikan & Penggunaan',
         'Kondisi Rumah Tangga',
         'Dokumen Tambahan',
         'Pakta Integritas',
       ];
 
   List<Widget> get _stepWidgets => [
-        _LinkingStep(
-          linkingSource: _linkingSource,
-          vehicleType: _vehicleType,
-          plateController: _plateController,
-          stnkController: _stnkController,
-          brandController: _brandController,
-          typeController: _typeController,
-          yearController: _yearController,
-          colorController: _colorController,
-          engineController: _engineController,
-          onLinkingChanged: (value) => setState(() => _linkingSource = value),
-          onVehicleTypeChanged: (value) => setState(() => _vehicleType = value),
+        VerificationVehicleStep(
+          vehicleCategory: _vehicleCategory,
+          controllers: _controllers,
+          stnkFileName: _fileLabel(_stnkPhotoPath),
+          vehicleFileName: _fileLabel(_vehiclePhotoPath),
+          onStnkCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _stnkPhotoPath = path,
+          ),
+          onVehicleCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _vehiclePhotoPath = path,
+          ),
+          onCategoryChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              _vehicleCategory = value;
+            });
+          },
         ),
-        _OwnershipStep(
-          ownership: _ownership,
-          companyController: _companyController,
-          onOwnershipChanged: (value) => setState(() => _ownership = value),
+        VerificationUsageStep(
+          ownershipStatus: _ownershipStatus,
+          usagePurpose: _usagePurpose,
+          businessCategory: _businessCategory,
+          usageIntensity: _usageIntensity,
+          controllers: _controllers,
+          purposeOptions: _purposeOptions,
+          onOwnershipChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              _ownershipStatus = value;
+              if (value == 'Milik Perusahaan' &&
+                  _usagePurpose == 'Pribadi (Non-Komersial)') {
+                _usagePurpose = 'Operasional Usaha';
+              }
+            });
+          },
+          onPurposeChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              _usagePurpose = value;
+            });
+          },
+          onBusinessChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              _businessCategory = value;
+            });
+          },
+          onIntensityChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              _usageIntensity = value;
+            });
+          },
         ),
-        _HouseholdStep(
+        _HouseholdOnlyStep(
           sharedVehicle: _sharedVehicle,
-          onChanged: (value) => setState(() => _sharedVehicle = value),
+          onSharedChanged: (value) {
+            setState(() {
+              _sharedVehicle = value;
+            });
+          },
         ),
-        _AdditionalDocsStep(
-          stnkFileName: _stnkPhoto,
-          plateFileName: _platePhoto,
-          extraDocName: _extraDoc,
-          onStnkCamera: () => _markDoc('Foto STNK diambil', (value) {
-            _stnkPhoto = value;
-          }),
-          onStnkPick: () => _markDoc('Foto STNK terpilih', (value) {
-            _stnkPhoto = value;
-          }),
-          onPlateCamera: () => _markDoc('Foto plat diambil', (value) {
-            _platePhoto = value;
-          }),
-          onPlatePick: () => _markDoc('Foto plat terpilih', (value) {
-            _platePhoto = value;
-          }),
-          onExtraPick: () => _markDoc('Dokumen tambahan terpilih', (value) {
-            _extraDoc = value;
-          }),
+        VerificationAdditionalDocsStep(
+          usagePurpose: _usagePurpose,
+          ownershipStatus: _ownershipStatus,
+          controllers: _controllers,
+          businessDocName: _fileLabel(_businessDocPath),
+          driverDocName: _fileLabel(_driverDocPath),
+          companyDocName: _fileLabel(_companyDocPath),
+          farmerDocName: _fileLabel(_farmerDocPath),
+          onBusinessCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _businessDocPath = path,
+          ),
+          onBusinessPick: () => _pickFile(
+            (path) => _businessDocPath = path,
+          ),
+          onDriverCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _driverDocPath = path,
+          ),
+          onDriverPick: () => _pickFile(
+            (path) => _driverDocPath = path,
+          ),
+          onCompanyCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _companyDocPath = path,
+          ),
+          onCompanyPick: () => _pickFile(
+            (path) => _companyDocPath = path,
+          ),
+          onFarmerCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _farmerDocPath = path,
+          ),
+          onFarmerPick: () => _pickFile(
+            (path) => _farmerDocPath = path,
+          ),
         ),
-        _AgreementStep(
+        VerificationReviewStep(
           agreeData: _agreeData,
-          agreeUsage: _agreeUsage,
-          agreeRules: _agreeRules,
-          showError: _showAgreementError,
-          onAgreeData: (value) => setState(() => _agreeData = value ?? false),
-          onAgreeUsage: (value) => setState(() => _agreeUsage = value ?? false),
-          onAgreeRules: (value) => setState(() => _agreeRules = value ?? false),
+          agreeRisk: _agreeRisk,
+          agreeAi: _agreeAi,
+          onAgreeData: (value) {
+            setState(() {
+              _agreeData = value ?? false;
+            });
+          },
+          onAgreeRisk: (value) {
+            setState(() {
+              _agreeRisk = value ?? false;
+            });
+          },
+          onAgreeAi: (value) {
+            setState(() {
+              _agreeAi = value ?? false;
+            });
+          },
         ),
       ];
 
-  bool get _isLastStep => _currentStep == _stepWidgets.length - 1;
+  List<String> get _purposeOptions {
+    if (_ownershipStatus == 'Milik Perusahaan') {
+      return const [
+        'Operasional Usaha',
+        'Logistik',
+        'Driver Ojol',
+        'Pertanian',
+        'Nelayan',
+      ];
+    }
+    return const [
+      'Pribadi (Non-Komersial)',
+      'Operasional Usaha',
+      'Logistik',
+      'Driver Ojol',
+      'Pertanian',
+      'Nelayan',
+    ];
+  }
+
+  void _handleContinue() {
+    if (_isLastStep) {
+      if (_validateBeforeSubmit()) {
+        _showSuccessDialog();
+      }
+      return;
+    }
+    setState(() {
+      _currentStep += 1;
+    });
+  }
 
   void _handleBack() {
     if (_currentStep == 0) {
       return;
     }
-    setState(() => _currentStep -= 1);
+    setState(() {
+      _currentStep -= 1;
+    });
   }
 
-  void _handleContinue() {
-    if (_isLastStep) {
-      final allAgreed = _agreeData && _agreeUsage && _agreeRules;
-      setState(() => _showAgreementError = !allAgreed);
-      if (!allAgreed) {
-        return;
-      }
-      context.go('/vehicles');
+  Future<void> _pickImage(
+    ImageSource source,
+    ValueChanged<String> onSelected,
+  ) async {
+    final file = await _picker.pickImage(source: source, imageQuality: 85);
+    if (file == null) {
       return;
     }
-
-    setState(() => _currentStep += 1);
+    setState(() {
+      onSelected(file.path);
+    });
   }
 
-  void _markDoc(String label, ValueChanged<String> onSet) {
-    setState(() => onSet(label));
+  Future<void> _pickFile(ValueChanged<String> onSelected) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+    final path = result?.files.single.path;
+    if (path == null) {
+      return;
+    }
+    setState(() {
+      onSelected(path);
+    });
+  }
+
+  String? _fileLabel(String? path) {
+    if (path == null || path.isEmpty) {
+      return null;
+    }
+    final parts = path.split(RegExp(r'[\\/]'));
+    return parts.isNotEmpty ? parts.last : path;
+  }
+
+  bool _validateBeforeSubmit() {
+    String? message;
+
+    if (_stnkPhotoPath == null) {
+      message = 'Foto STNK wajib diambil.';
+    } else if (_vehiclePhotoPath == null) {
+      message = 'Foto kendaraan wajib diambil.';
+    } else if (_controllers.plateNumber.text.trim().isEmpty) {
+      message = 'Nomor polisi wajib diisi.';
+    } else if (_controllers.stnkNumber.text.trim().isEmpty) {
+      message = 'Nomor STNK wajib diisi.';
+    } else if (_ownershipStatus == 'Milik Perusahaan' &&
+        _controllers.companyName.text.trim().isEmpty) {
+      message = 'Nama perusahaan wajib diisi.';
+    } else if (_ownershipStatus == 'Milik Perusahaan' &&
+        _controllers.companyId.text.trim().isEmpty) {
+      message = 'ID perusahaan wajib diisi.';
+    } else if (_usagePurpose == 'Operasional Usaha' &&
+        _controllers.businessName.text.trim().isEmpty) {
+      message = 'Nama usaha wajib diisi.';
+    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
+        _controllers.workLocation.text.trim().isEmpty) {
+      message = 'Lokasi kerja/usaha wajib diisi.';
+    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
+        _controllers.distance.text.trim().isEmpty) {
+      message = 'Estimasi jarak wajib diisi.';
+    } else if (_usagePurpose == 'Operasional Usaha' &&
+        _controllers.nibNumber.text.trim().isEmpty) {
+      message = 'Nomor NIB/SKU wajib diisi.';
+    } else if (_usagePurpose == 'Operasional Usaha' &&
+        _businessDocPath == null) {
+      message = 'Dokumen NIB/SKU wajib dilampirkan.';
+    } else if (_usagePurpose == 'Driver Ojol' && _driverDocPath == null) {
+      message = 'Bukti driver aktif wajib dilampirkan.';
+    } else if ((_ownershipStatus == 'Milik Perusahaan' ||
+            _usagePurpose == 'Logistik') &&
+        _companyDocPath == null) {
+      message = 'Surat operasional wajib dilampirkan.';
+    } else if ((_usagePurpose == 'Pertanian' || _usagePurpose == 'Nelayan') &&
+        _farmerDocPath == null) {
+      message = 'Surat rekomendasi wajib dilampirkan.';
+    } else if (!_agreeData || !_agreeRisk || !_agreeAi) {
+      message = 'Semua persetujuan wajib dicentang.';
+    }
+
+    if (message == null) {
+      return true;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+    return false;
+  }
+
+  Future<void> _showSuccessDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kendaraan berhasil ditambahkan',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Silakan cek kuota subsidi kendaraan Anda.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.go('/vehicles');
+                        },
+                        child: const Text('Nanti'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.go('/home/quota');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Cek Kuota'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -208,6 +455,7 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = currentStep / totalSteps;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Column(
@@ -220,12 +468,22 @@ class _StepHeader extends StatelessWidget {
                 .bodySmall
                 ?.copyWith(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: AppColors.softGray,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primaryRed),
+            ),
           ),
         ],
       ),
@@ -233,157 +491,13 @@ class _StepHeader extends StatelessWidget {
   }
 }
 
-class _LinkingStep extends StatelessWidget {
-  final String linkingSource;
-  final String vehicleType;
-  final TextEditingController plateController;
-  final TextEditingController stnkController;
-  final TextEditingController brandController;
-  final TextEditingController typeController;
-  final TextEditingController yearController;
-  final TextEditingController colorController;
-  final TextEditingController engineController;
-  final ValueChanged<String> onLinkingChanged;
-  final ValueChanged<String> onVehicleTypeChanged;
-
-  const _LinkingStep({
-    required this.linkingSource,
-    required this.vehicleType,
-    required this.plateController,
-    required this.stnkController,
-    required this.brandController,
-    required this.typeController,
-    required this.yearController,
-    required this.colorController,
-    required this.engineController,
-    required this.onLinkingChanged,
-    required this.onVehicleTypeChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle('Sumber Data Kendaraan'),
-        const SizedBox(height: 12),
-        AppCard(
-          child: Column(
-            children: [
-              DropdownField(
-                label: 'Sumber Data',
-                value: linkingSource,
-                items: const ['KTP', 'KK', 'Dokumen Lain'],
-                onChanged: (value) {
-                  if (value == null) return;
-                  onLinkingChanged(value);
-                },
-              ),
-              InputField(
-                label: 'Nomor Plat Kendaraan',
-                hintText: 'B 1234 ABC',
-                controller: plateController,
-              ),
-              InputField(
-                label: 'Nomor STNK',
-                hintText: 'STNK-0002341',
-                controller: stnkController,
-              ),
-              DropdownField(
-                label: 'Jenis Kendaraan',
-                value: vehicleType,
-                items: const ['Roda 2', 'Roda 4', 'Roda 6'],
-                onChanged: (value) {
-                  if (value == null) return;
-                  onVehicleTypeChanged(value);
-                },
-              ),
-              InputField(
-                label: 'Merk',
-                hintText: 'Toyota',
-                controller: brandController,
-              ),
-              InputField(
-                label: 'Tipe',
-                hintText: 'Avanza 1.5 G',
-                controller: typeController,
-              ),
-              InputField(
-                label: 'Tahun',
-                hintText: '2020',
-                controller: yearController,
-                keyboardType: TextInputType.number,
-              ),
-              InputField(
-                label: 'Warna',
-                hintText: 'Hitam',
-                controller: colorController,
-              ),
-              InputField(
-                label: 'Kapasitas Mesin (cc)',
-                hintText: '1496',
-                controller: engineController,
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OwnershipStep extends StatelessWidget {
-  final String ownership;
-  final TextEditingController companyController;
-  final ValueChanged<String> onOwnershipChanged;
-
-  const _OwnershipStep({
-    required this.ownership,
-    required this.companyController,
-    required this.onOwnershipChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle('Kepemilikan'),
-        const SizedBox(height: 12),
-        AppCard(
-          child: Column(
-            children: [
-              DropdownField(
-                label: 'Status Kepemilikan',
-                value: ownership,
-                items: const ['Pribadi', 'Perusahaan'],
-                onChanged: (value) {
-                  if (value == null) return;
-                  onOwnershipChanged(value);
-                },
-              ),
-              if (ownership == 'Perusahaan')
-                InputField(
-                  label: 'Nama Perusahaan',
-                  hintText: 'PT Contoh Sejahtera',
-                  controller: companyController,
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HouseholdStep extends StatelessWidget {
+class _HouseholdOnlyStep extends StatelessWidget {
   final bool sharedVehicle;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool> onSharedChanged;
 
-  const _HouseholdStep({
+  const _HouseholdOnlyStep({
     required this.sharedVehicle,
-    required this.onChanged,
+    required this.onSharedChanged,
   });
 
   @override
@@ -396,131 +510,11 @@ class _HouseholdStep extends StatelessWidget {
         AppCard(
           child: SwitchListTile(
             contentPadding: EdgeInsets.zero,
+            title: const Text('Kendaraan digunakan bersama?'),
             value: sharedVehicle,
-            onChanged: onChanged,
-            title: const Text('Kendaraan digunakan bersama keluarga'),
-            subtitle: Text(
-              sharedVehicle
-                  ? 'Kendaraan bisa digunakan oleh anggota keluarga.'
-                  : 'Kendaraan hanya digunakan pemilik terdaftar.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.textSecondary),
-            ),
+            onChanged: onSharedChanged,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _AdditionalDocsStep extends StatelessWidget {
-  final String? stnkFileName;
-  final String? plateFileName;
-  final String? extraDocName;
-  final VoidCallback onStnkCamera;
-  final VoidCallback onStnkPick;
-  final VoidCallback onPlateCamera;
-  final VoidCallback onPlatePick;
-  final VoidCallback onExtraPick;
-
-  const _AdditionalDocsStep({
-    required this.stnkFileName,
-    required this.plateFileName,
-    required this.extraDocName,
-    required this.onStnkCamera,
-    required this.onStnkPick,
-    required this.onPlateCamera,
-    required this.onPlatePick,
-    required this.onExtraPick,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle('Dokumen Tambahan'),
-        const SizedBox(height: 12),
-        UploadTile(
-          title: 'Foto STNK',
-          subtitle: 'Ambil atau pilih foto STNK',
-          fileName: stnkFileName,
-          onCamera: onStnkCamera,
-          onPick: onStnkPick,
-        ),
-        const SizedBox(height: 12),
-        UploadTile(
-          title: 'Foto Plat Kendaraan',
-          subtitle: 'Ambil atau pilih foto plat',
-          fileName: plateFileName,
-          onCamera: onPlateCamera,
-          onPick: onPlatePick,
-        ),
-        const SizedBox(height: 12),
-        UploadTile(
-          title: 'Dokumen Tambahan',
-          subtitle: 'Unggah dokumen pendukung',
-          fileName: extraDocName,
-          onPick: onExtraPick,
-        ),
-      ],
-    );
-  }
-}
-
-class _AgreementStep extends StatelessWidget {
-  final bool agreeData;
-  final bool agreeUsage;
-  final bool agreeRules;
-  final bool showError;
-  final ValueChanged<bool?> onAgreeData;
-  final ValueChanged<bool?> onAgreeUsage;
-  final ValueChanged<bool?> onAgreeRules;
-
-  const _AgreementStep({
-    required this.agreeData,
-    required this.agreeUsage,
-    required this.agreeRules,
-    required this.showError,
-    required this.onAgreeData,
-    required this.onAgreeUsage,
-    required this.onAgreeRules,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle('Pakta Integritas'),
-        const SizedBox(height: 8),
-        AgreementTile(
-          value: agreeData,
-          label: 'Data kendaraan yang saya isi adalah benar.',
-          onChanged: onAgreeData,
-        ),
-        AgreementTile(
-          value: agreeUsage,
-          label: 'Kendaraan digunakan sesuai ketentuan subsidi.',
-          onChanged: onAgreeUsage,
-        ),
-        AgreementTile(
-          value: agreeRules,
-          label: 'Saya siap mengikuti proses verifikasi tambahan.',
-          onChanged: onAgreeRules,
-        ),
-        if (showError) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Semua persetujuan wajib dicentang.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.danger),
-          ),
-        ],
       ],
     );
   }

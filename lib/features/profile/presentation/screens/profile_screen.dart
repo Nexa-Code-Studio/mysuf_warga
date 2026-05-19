@@ -79,13 +79,13 @@ class ProfileScreen extends ConsumerWidget {
                       value: formatCurrencyIdr(data.walletBalance),
                       icon: Icons.account_balance_wallet_outlined,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     _MetricCard(
                       label: 'Kuota Sisa',
                       value: '${data.quotaRemaining} L',
                       icon: Icons.local_gas_station_outlined,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     _MetricCard(
                       label: 'Kendaraan',
                       value: '${data.vehiclesCount} Unit',

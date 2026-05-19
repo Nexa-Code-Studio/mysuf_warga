@@ -83,6 +83,8 @@ class VehicleDetailScreen extends StatelessWidget {
                   const _DetailRow(label: 'Warna', value: 'Hitam'),
                   const SizedBox(height: 8),
                   const _DetailRow(label: 'Kapasitas Mesin', value: '1496 cc'),
+                  const SizedBox(height: 8),
+                  const _DetailRow(label: 'PKB Tahunan', value: 'Rp 450.000'),
                 ],
               ),
             ),

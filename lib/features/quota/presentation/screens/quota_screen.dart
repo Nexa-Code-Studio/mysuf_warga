@@ -162,6 +162,35 @@ class QuotaScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Kuota per Kendaraan',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        _VehicleQuotaTile(
+                          plate: 'B 1234 ABC',
+                          type: 'Roda 4 - Sedan',
+                          quota: '80 L',
+                          used: '35 L',
+                        ),
+                        const SizedBox(height: 10),
+                        _VehicleQuotaTile(
+                          plate: 'B 9234 SFD',
+                          type: 'Roda 2 - Motor',
+                          quota: '40 L',
+                          used: '18 L',
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
@@ -173,6 +202,86 @@ class QuotaScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _VehicleQuotaTile extends StatelessWidget {
+  final String plate;
+  final String type;
+  final String quota;
+  final String used;
+
+  const _VehicleQuotaTile({
+    required this.plate,
+    required this.type,
+    required this.quota,
+    required this.used,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.softGray,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.directions_car, color: AppColors.primaryRed),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  plate,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  type,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                quota,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Terpakai $used',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
