@@ -20,13 +20,17 @@ class VehicleListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kendaraan'),
-        actions: [
-          IconButton(
-            onPressed: () => context.go('/vehicles/add'),
-            icon: const Icon(Icons.add_circle_outline),
-          ),
-        ],
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: FloatingActionButton(
+          onPressed: () => context.go('/vehicles/add'),
+          backgroundColor: AppColors.primaryRed,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.add, size: 26),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),

@@ -49,6 +49,7 @@ class VerificationIdentityStep extends StatelessWidget {
                 controller: controllers.dob,
                 readOnly: true,
                 onTap: onPickDob,
+                fillColor: Colors.white,
               ),
               DropdownField(
                 label: 'Jenis Kelamin',

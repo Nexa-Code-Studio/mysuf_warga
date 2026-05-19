@@ -53,6 +53,7 @@ class InputField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
   final VoidCallback? onTap;
+  final Color? fillColor;
 
   const InputField({
     super.key,
@@ -63,6 +64,7 @@ class InputField extends StatelessWidget {
     this.inputFormatters,
     this.readOnly = false,
     this.onTap,
+    this.fillColor,
   });
 
   @override
@@ -78,6 +80,8 @@ class InputField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hintText,
+          filled: fillColor != null,
+          fillColor: fillColor,
           border: const OutlineInputBorder(),
         ),
       ),

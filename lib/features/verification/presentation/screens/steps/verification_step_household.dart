@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/app_card.dart';
 import '../../../../../shared/widgets/status_pill.dart';
-import 'package:flutter/services.dart';
 import 'verification_form_state.dart';
 import 'verification_form_widgets.dart';
 
