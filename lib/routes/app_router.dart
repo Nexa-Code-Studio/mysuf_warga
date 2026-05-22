@@ -28,6 +28,13 @@ import '../features/profile/presentation/screens/help_center_screen.dart';
 import '../features/risk/presentation/screens/risk_screen.dart';
 import '../shared/models/vehicle.dart';
 
+import '../features/auth/presentation/screens/ktp_capture_screen.dart';
+import '../features/auth/presentation/screens/ocr_confirmation_screen.dart';
+import '../features/auth/presentation/screens/selfie_capture_screen.dart';
+import '../features/auth/presentation/screens/verification_result_screen.dart';
+import '../features/auth/domain/models/ktp_data.dart';
+import '../features/auth/domain/models/verification_result.dart';
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -98,12 +105,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/auth/ocr-ktp',
-        redirect: (_, __) => '/register?step=2',
+        path: '/auth/ktp-capture',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const KtpCaptureScreen(),
+        ),
       ),
       GoRoute(
-        path: '/auth/selfie',
-        redirect: (_, __) => '/register?step=3',
+        path: '/auth/ocr-confirm',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          OcrConfirmationScreen(
+            initialData: state.extra! as KtpData,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/selfie-capture',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const SelfieCaptureScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/verification-result',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          VerificationResultScreen(
+            result: state.extra! as VerificationResult,
+          ),
+        ),
       ),
       GoRoute(
         path: '/auth/nik-kk',

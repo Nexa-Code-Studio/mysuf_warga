@@ -6,6 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/ocr_service.dart';
+import '../../../../core/services/face_verification_service.dart';
+import '../../domain/models/ktp_data.dart';
+import '../../domain/models/verification_result.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/camera_capture_screen.dart';
 import '../../../../shared/widgets/step_indicator.dart';
@@ -36,6 +40,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  final _ocrService = OcrService();
+  final _faceVerificationService = FaceVerificationService();
+  KtpData? _ktpData;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +58,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _ocrService.dispose();
+    _faceVerificationService.dispose();
     super.dispose();
   }
 
@@ -76,7 +86,130 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _ktpPhotoPath = result;
         _ktpRequiredError = false;
       });
+      await _processKtpOcr(result);
     }
+  }
+
+  Future<void> _processKtpOcr(String imagePath) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final data = await _ocrService.processImage(File(imagePath));
+      if (mounted) {
+        Navigator.pop(context); // close loading
+        
+        if (data.nik.isEmpty) {
+          // NIK not found, so probably not a KTP or blurry
+          setState(() {
+             _ktpPhotoPath = null;
+          });
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFFFFFFFF),
+              title: const Text('Foto Tidak Valid'),
+              content: const Text('Gagal mendeteksi NIK. Pastikan foto yang diunggah adalah KTP yang jelas dan tidak buram.'),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Ulangi Foto'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          setState(() {
+            _ktpData = data;
+          });
+          _showOcrResultDialog(data);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memproses KTP: $e')),
+        );
+      }
+    }
+  }
+
+  void _showOcrResultDialog(KtpData data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFFFF),
+        title: const Text('Hasil Baca KTP'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Data berikut disimulasikan dari database berdasarkan NIK Anda:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 8),
+              _buildOcrRow('NIK', data.nik),
+              _buildOcrRow('Nama', data.nama),
+              _buildOcrRow('Tempat/Tgl Lahir', data.tempatTanggalLahir),
+              _buildOcrRow('Jenis Kelamin', data.jenisKelamin),
+              _buildOcrRow('Alamat', data.alamat),
+              _buildOcrRow('Agama', data.agama),
+              _buildOcrRow('Status Perkawinan', data.statusPerkawinan),
+              _buildOcrRow('Pekerjaan', data.pekerjaan),
+              _buildOcrRow('Kewarganegaraan', data.kewarganegaraan),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _goToStep(_currentStep + 1);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Lanjut'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOcrRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const Text(': ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Expanded(
+            child: Text(value.isEmpty ? '-' : value, style: const TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _captureSelfie() async {
@@ -96,6 +229,128 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _selfiePhotoPath = result;
         _selfieRequiredError = false;
       });
+      await _verifySelfieFace(result);
+    }
+  }
+
+  Future<void> _verifySelfieFace(String imagePath) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final result = await _faceVerificationService.verifyFace(File(imagePath));
+      if (mounted) {
+        Navigator.pop(context); // close loading
+        if (result.status == VerificationStatus.failed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verifikasi Wajah Gagal: ${result.message}')),
+          );
+          setState(() {
+            _selfiePhotoPath = null;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wajah Terdeteksi dengan Baik!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mendeteksi wajah: $e')),
+        );
+      }
+    }
+  }
+
+  void _validateAndSubmit() {
+    if (_ktpData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data KTP belum diproses. Silakan ulangi upload KTP.')),
+      );
+      return;
+    }
+
+    final inputNik = _nikController.text.trim();
+    final inputNama = _nameController.text.trim().toLowerCase();
+    final ocrNik = _ktpData!.nik.trim();
+    final ocrNama = _ktpData!.nama.trim().toLowerCase();
+
+    bool isValid = true;
+    String errorMessage = '';
+
+    if (inputNik != ocrNik && ocrNik.isNotEmpty) {
+      isValid = false;
+      errorMessage = 'NIK tidak cocok dengan foto KTP.';
+    } else if (inputNama.isNotEmpty && ocrNama.isNotEmpty && !ocrNama.contains(inputNama) && !inputNama.contains(ocrNama)) {
+      isValid = false;
+      errorMessage = 'Nama tidak cocok dengan foto KTP.';
+    }
+
+    if (!isValid) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppColors.primaryRed, size: 64),
+              const SizedBox(height: 16),
+              const Text('Validasi Gagal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              Text('$errorMessage\n\nData Input:\nNIK: $inputNik\nNama: ${_nameController.text}\n\nData KTP:\nNIK: $ocrNik\nNama: ${_ktpData!.nama}', textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Perbaiki Data'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
+              const SizedBox(height: 16),
+              const Text('Validasi Berhasil', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              const Text('Data diri, KTP, dan Selfie Anda sesuai.', textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.go('/register/processing');
+                },
+                child: const Text('Lanjut'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
   }
 
@@ -190,7 +445,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           });
                                           return;
                                         }
-                                        context.go('/register/processing');
+                                        _validateAndSubmit();
                                       } else {
                                         _goToStep(_currentStep + 1);
                                       }
