@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
-enum CameraOverlayType {
-  ktp,
-  selfieKtp,
-}
+enum CameraOverlayType { ktp, selfieKtp }
 
 class CameraCaptureScreen extends StatefulWidget {
   final String title;
@@ -47,7 +44,6 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     _controller?.dispose();
     super.dispose();
   }
-
 
   Future<void> _initializeCamera() async {
     try {
@@ -131,15 +127,12 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               child: Text(
                 widget.helperText,
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.white70),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
               ),
             ),
-            Expanded(
-              child: _buildPreview(),
-            ),
+            Expanded(child: _buildPreview()),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               child: SizedBox(
@@ -173,8 +166,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.warning_amber_outlined,
-                  color: Colors.white70, size: 40),
+              const Icon(
+                Icons.warning_amber_outlined,
+                color: Colors.white70,
+                size: 40,
+              ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
@@ -217,9 +213,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           fit: StackFit.expand,
           children: [
             CameraPreview(controller),
-            CustomPaint(
-              painter: _CameraOverlayPainter(widget.overlayType),
-            ),
+            CustomPaint(painter: _CameraOverlayPainter(widget.overlayType)),
           ],
         );
       },
@@ -236,14 +230,14 @@ class _CameraOverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final layerRect = Offset.zero & size;
     canvas.saveLayer(layerRect, Paint());
-    final overlayPaint = Paint()..color = Colors.black.withOpacity(0.55);
+    final overlayPaint = Paint()..color = Colors.black.withValues(alpha: 0.55);
     canvas.drawRect(layerRect, overlayPaint);
 
     final clearPaint = Paint()..blendMode = BlendMode.clear;
     final outlinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = Colors.white.withOpacity(0.85);
+      ..color = Colors.white.withValues(alpha: 0.85);
 
     if (overlayType == CameraOverlayType.ktp) {
       final frameSize = Size(size.width * 0.78, size.height * 0.28);
@@ -259,31 +253,14 @@ class _CameraOverlayPainter extends CustomPainter {
       canvas.drawRRect(frameRRect, clearPaint);
       canvas.drawRRect(frameRRect, outlinePaint);
     } else {
-      final faceRadius = size.width * 0.26;
       final faceCenter = Offset(size.width / 2, size.height * 0.42);
-      final faceRect = Rect.fromCircle(center: faceCenter, radius: faceRadius);
+      final faceRect = Rect.fromCenter(
+        center: faceCenter,
+        width: size.width * 0.58,
+        height: size.width * 0.78,
+      );
       canvas.drawOval(faceRect, clearPaint);
       canvas.drawOval(faceRect, outlinePaint);
-
-      final ktpSize = Size(size.width * 0.5, size.height * 0.18);
-      final ktpRect = Rect.fromCenter(
-        center: Offset(size.width * 0.66, size.height * 0.68),
-        width: ktpSize.width,
-        height: ktpSize.height,
-      );
-      final ktpRRect = RRect.fromRectAndRadius(
-        ktpRect,
-        const Radius.circular(12),
-      );
-      canvas.drawRRect(ktpRRect, clearPaint);
-      canvas.drawRRect(ktpRRect, outlinePaint);
-
-      final helperPaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = Colors.white.withOpacity(0.4);
-      canvas.drawLine(faceCenter, ktpRect.topLeft, helperPaint);
-      canvas.drawLine(faceCenter, ktpRect.topRight, helperPaint);
     }
 
     canvas.restore();

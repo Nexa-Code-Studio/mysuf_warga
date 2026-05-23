@@ -10,6 +10,7 @@ import '../../../../core/services/ocr_service.dart';
 import '../../../../core/services/face_verification_service.dart';
 import '../../domain/models/ktp_data.dart';
 import '../../domain/models/verification_result.dart';
+import '../../data/auth_repository.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/camera_capture_screen.dart';
 import '../../../../shared/widgets/step_indicator.dart';
@@ -25,8 +26,10 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   late int _currentStep;
+  final _authRepository = AuthRepository();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
   String? _ktpPhotoPath;
   String? _selfiePhotoPath;
   bool _ktpRequiredError = false;
@@ -130,8 +133,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
         } else {
           setState(() {
             _ktpData = data;
+            _nikController.text = data.nik;
           });
-          _showOcrResultDialog(data);
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFFFFFFFF),
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text('KTP Berhasil Dibaca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ],
+              ),
+              content: Text(
+                'NIK Anda berhasil dideteksi:\n\n${data.nik}\n\nSilakan klik Lanjut untuk mengambil foto selfie.',
+                style: const TextStyle(fontSize: 14),
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _goToStep(_currentStep + 1);
+                  },
+                  child: const Text('Lanjut'),
+                ),
+              ],
+            ),
+          );
         }
       }
     } catch (e) {
@@ -218,7 +252,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         builder: (_) => const CameraCaptureScreen(
           title: 'Ambil Selfie',
           actionLabel: 'Ambil Selfie',
-          helperText: 'Pegang KTP di area kartu, wajah di area lingkaran.',
+          helperText:
+              'Posisikan wajah di dalam oval, lihat lurus ke kamera, dan pastikan hanya satu wajah yang terlihat.',
           lensDirection: CameraLensDirection.front,
           overlayType: CameraOverlayType.selfieKtp,
         ),
@@ -321,36 +356,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
     } else {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFFFFFFFF),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
-              const SizedBox(height: 16),
-              const Text('Validasi Berhasil', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              const Text('Data diri, KTP, dan Selfie Anda sesuai.', textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(48),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.go('/register/processing');
-                },
-                child: const Text('Lanjut'),
-              ),
-            ],
-          ),
+      _submitRegistration();
+    }
+  }
+
+  Future<void> _submitRegistration() async {
+    if (_ktpPhotoPath == null || _selfiePhotoPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto KTP dan Selfie wajib diunggah.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Show a modal progress dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryRed),
+      ),
+    );
+
+    try {
+      final attempt = await _authRepository.submitRegistrationAttempt(
+        nik: _nikController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        ktpPhotoPath: _ktpPhotoPath!,
+        selfiePhotoPath: _selfiePhotoPath!,
+        ocrRawText: _ktpData?.ocrRawText,
+      );
+      if (!mounted) return;
+      Navigator.pop(context); // Close progress dialog
+      
+      context.go(
+        '/register/processing?attempt_id=${Uri.encodeComponent(attempt.id)}',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close progress dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -358,9 +417,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Daftar Akun'),
-      ),
+      appBar: AppBar(title: const Text('Daftar Akun')),
       body: SafeArea(
         child: Column(
           children: [
@@ -394,7 +451,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 onPressed: () {
                                   final isValid =
                                       _dataFormKey.currentState?.validate() ??
-                                          false;
+                                      false;
                                   if (!isValid) {
                                     setState(() {
                                       _autoValidateData = true;
@@ -406,8 +463,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryRed,
                                   foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -428,15 +486,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      if (_currentStep == 2) {
-                                        if (_ktpPhotoPath == null) {
-                                          setState(() {
-                                            _ktpRequiredError = true;
-                                          });
-                                          return;
-                                        }
-                                      }
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : () {
+                                            if (_currentStep == 2) {
+                                              if (_ktpPhotoPath == null) {
+                                                setState(() {
+                                                  _ktpRequiredError = true;
+                                                });
+                                                return;
+                                              }
+                                            }
 
                                       if (_currentStep == 3) {
                                         if (_selfiePhotoPath == null) {
@@ -454,13 +514,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       backgroundColor: AppColors.primaryRed,
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 14),
+                                        vertical: 14,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
-                                    child:
-                                        Text(_currentStep == 3 ? 'Selesai' : 'Lanjut'),
+                                    child: Text(
+                                      _currentStep == 3
+                                          ? (_isSubmitting
+                                                ? 'Mengirim...'
+                                                : 'Selesai')
+                                          : 'Lanjut',
+                                    ),
                                   ),
                                 ),
                               ],
@@ -479,10 +545,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     Text(
                       'Sudah Punya Akun? ',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     TextButton(
                       onPressed: () => context.go('/login'),
@@ -522,23 +587,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Text(
             'Lengkapi data awal',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             'Pastikan data sesuai KTP dan KK.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           TextFormField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Nama Lengkap',
-            ),
+            decoration: const InputDecoration(labelText: 'Nama Lengkap'),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Form wajib diisi';
@@ -549,9 +612,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _nikController,
-            decoration: const InputDecoration(
-              labelText: 'NIK',
-            ),
+            decoration: const InputDecoration(labelText: 'NIK'),
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (value) {
@@ -587,16 +648,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-            ),
+            decoration: const InputDecoration(labelText: 'Email'),
             validator: (value) {
               final trimmed = value?.trim() ?? '';
               if (trimmed.isEmpty) {
                 return 'Form wajib diisi';
               }
-              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                  .hasMatch(trimmed)) {
+              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(trimmed)) {
                 return 'Email tidak valid';
               }
               return null;
@@ -672,16 +730,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Text(
           'Unggah foto KTP',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
           'Pastikan foto jelas dan tidak terpotong.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
         AppCard(
@@ -729,10 +787,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 8),
           Text(
             'Foto KTP wajib diisi.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.danger),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.danger),
           ),
         ],
         const SizedBox(height: 16),
@@ -764,16 +821,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Text(
           'Verifikasi identitas',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
-          'Selfie digunakan untuk mencocokkan data KTP.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+          'Selfie digunakan untuk mencocokkan wajah Anda dengan foto pada KTP.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
         AppCard(
@@ -821,10 +878,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 8),
           Text(
             'Foto selfie wajib diisi.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.danger),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.danger),
           ),
         ],
         const SizedBox(height: 16),
@@ -834,7 +890,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: const Color(0xFFFFF1F3),
           borderColor: const Color(0xFFFFC7CF),
           message:
-              'Pastikan wajah terlihat jelas dan tidak tertutup. Gunakan pencahayaan yang baik.',
+              'Pastikan hanya satu wajah yang terlihat, tidak tertutup, dan gunakan pencahayaan yang baik.',
         ),
         const SizedBox(height: 12),
         _InfoCard(
@@ -843,7 +899,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: const Color(0xFFFFF5E5),
           borderColor: const Color(0xFFFFD8A8),
           message:
-              'Foto selfie disimpan aman dan hanya digunakan untuk proses verifikasi identitas.',
+              'Foto selfie disimpan aman dan hanya digunakan untuk proses verifikasi identitas. Jangan memasukkan KTP ke dalam frame selfie.',
         ),
       ],
     );
@@ -882,10 +938,9 @@ class _InfoCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           ),
         ],

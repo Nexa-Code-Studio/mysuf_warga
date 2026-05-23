@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'steps/verification_form_state.dart';
-import 'steps/verification_step_additional_docs.dart';
 import 'steps/verification_step_household.dart';
 import 'steps/verification_step_identity.dart';
 import 'steps/verification_step_review.dart';
@@ -22,13 +21,9 @@ class SubsidyVerificationScreen extends StatefulWidget {
 
 class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
   int _currentStep = 0;
-  String _vehicleCategory = 'Sepeda Motor';
   String _gender = 'Laki-laki';
-  String _ownershipStatus = 'Milik Pribadi';
-  String _usagePurpose = 'Pribadi (Non-Komersial)';
+  String _usageType = 'PERSONAL';
   String _occupation = 'UMKM';
-  String _businessCategory = 'Non-komersial';
-  String _usageIntensity = 'Normal';
   String _householdVehicles = '1-2 Kendaraan';
   bool _sharedVehicle = false;
   String _resultStatus = 'Pending Review';
@@ -41,10 +36,7 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
 
   String? _stnkPhotoPath;
   String? _vehiclePhotoPath;
-  String? _businessDocPath;
-  String? _driverDocPath;
-  String? _companyDocPath;
-  String? _farmerDocPath;
+  String? _productiveBusinessDocPath;
 
   final List<FamilyMember> _members = const [
     FamilyMember('Siti Rahma', 'Istri', true),
@@ -124,9 +116,8 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
   List<String> get _stepTitles => const [
         'Verifikasi Identitas',
         'Linking Kendaraan',
-        'Kepemilikan & Penggunaan',
+        'Penggunaan & Dokumen Tambahan',
         'Kondisi Rumah Tangga',
-        'Dokumen Tambahan',
         'Review & Pakta Integritas',
       ];
 
@@ -154,7 +145,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
           onPickDob: _pickDob,
         ),
         VerificationVehicleStep(
-          vehicleCategory: _vehicleCategory,
           controllers: _controllers,
           stnkFileName: _fileLabel(_stnkPhotoPath),
           vehicleFileName: _fileLabel(_vehiclePhotoPath),
@@ -166,58 +156,25 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
             ImageSource.camera,
             (path) => _vehiclePhotoPath = path,
           ),
-          onCategoryChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _vehicleCategory = value;
-            });
-          },
         ),
         VerificationUsageStep(
-          ownershipStatus: _ownershipStatus,
-          usagePurpose: _usagePurpose,
-          businessCategory: _businessCategory,
-          usageIntensity: _usageIntensity,
-          controllers: _controllers,
-          purposeOptions: _purposeOptions,
-          onOwnershipChanged: (value) {
+          usageType: _usageType,
+          onUsageTypeChanged: (value) {
             if (value == null) {
               return;
             }
             setState(() {
-              _ownershipStatus = value;
-              if (value == 'Milik Perusahaan' &&
-                  _usagePurpose == 'Pribadi (Non-Komersial)') {
-                _usagePurpose = 'Operasional Usaha';
-              }
+              _usageType = value;
             });
           },
-          onPurposeChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _usagePurpose = value;
-            });
-          },
-          onBusinessChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _businessCategory = value;
-            });
-          },
-          onIntensityChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _usageIntensity = value;
-            });
-          },
+          productiveBusinessDocName: _fileLabel(_productiveBusinessDocPath),
+          onProductiveBusinessCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _productiveBusinessDocPath = path,
+          ),
+          onProductiveBusinessPick: () => _pickFile(
+            (path) => _productiveBusinessDocPath = path,
+          ),
         ),
         VerificationHouseholdStep(
           householdVehicles: _householdVehicles,
@@ -237,43 +194,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
               _sharedVehicle = value;
             });
           },
-        ),
-        VerificationAdditionalDocsStep(
-          usagePurpose: _usagePurpose,
-          ownershipStatus: _ownershipStatus,
-          controllers: _controllers,
-          businessDocName: _fileLabel(_businessDocPath),
-          driverDocName: _fileLabel(_driverDocPath),
-          companyDocName: _fileLabel(_companyDocPath),
-          farmerDocName: _fileLabel(_farmerDocPath),
-          onBusinessCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _businessDocPath = path,
-          ),
-          onBusinessPick: () => _pickFile(
-            (path) => _businessDocPath = path,
-          ),
-          onDriverCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _driverDocPath = path,
-          ),
-          onDriverPick: () => _pickFile(
-            (path) => _driverDocPath = path,
-          ),
-          onCompanyCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _companyDocPath = path,
-          ),
-          onCompanyPick: () => _pickFile(
-            (path) => _companyDocPath = path,
-          ),
-          onFarmerCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _farmerDocPath = path,
-          ),
-          onFarmerPick: () => _pickFile(
-            (path) => _farmerDocPath = path,
-          ),
         ),
         VerificationReviewStep(
           agreeData: _agreeData,
@@ -316,26 +236,6 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
     setState(() {
       _currentStep -= 1;
     });
-  }
-
-  List<String> get _purposeOptions {
-    if (_ownershipStatus == 'Milik Perusahaan') {
-      return const [
-        'Operasional Usaha',
-        'Logistik',
-        'Driver Ojol',
-        'Pertanian',
-        'Nelayan',
-      ];
-    }
-    return const [
-      'Pribadi (Non-Komersial)',
-      'Operasional Usaha',
-      'Logistik',
-      'Driver Ojol',
-      'Pertanian',
-      'Nelayan',
-    ];
   }
 
   Future<void> _pickDob() async {
@@ -483,25 +383,8 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
       message = 'Foto STNK wajib diambil.';
     } else if (_vehiclePhotoPath == null) {
       message = 'Foto kendaraan wajib diambil.';
-    } else if (_controllers.plateNumber.text.trim().isEmpty) {
-      message = 'Nomor polisi wajib diisi.';
     } else if (_controllers.stnkNumber.text.trim().isEmpty) {
       message = 'Nomor STNK wajib diisi.';
-    } else if (_ownershipStatus == 'Milik Perusahaan' &&
-        _controllers.companyName.text.trim().isEmpty) {
-      message = 'Nama perusahaan wajib diisi.';
-    } else if (_ownershipStatus == 'Milik Perusahaan' &&
-        _controllers.companyId.text.trim().isEmpty) {
-      message = 'ID perusahaan wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _controllers.businessName.text.trim().isEmpty) {
-      message = 'Nama usaha wajib diisi.';
-    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
-        _controllers.workLocation.text.trim().isEmpty) {
-      message = 'Lokasi kerja/usaha wajib diisi.';
-    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
-        _controllers.distance.text.trim().isEmpty) {
-      message = 'Estimasi jarak wajib diisi.';
     } else if (_controllers.householdActiveCount.text.trim().isEmpty) {
       message = 'Jumlah anggota aktif berkendara wajib diisi.';
     } else if (_sharedVehicle && _controllers.sharedName.text.trim().isEmpty) {
@@ -511,21 +394,9 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
     } else if (_sharedVehicle &&
         _controllers.sharedRelation.text.trim().isEmpty) {
       message = 'Relasi keluarga wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _controllers.nibNumber.text.trim().isEmpty) {
-      message = 'Nomor NIB/SKU wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _businessDocPath == null) {
-      message = 'Dokumen NIB/SKU wajib dilampirkan.';
-    } else if (_usagePurpose == 'Driver Ojol' && _driverDocPath == null) {
-      message = 'Bukti driver aktif wajib dilampirkan.';
-    } else if ((_ownershipStatus == 'Milik Perusahaan' ||
-            _usagePurpose == 'Logistik') &&
-        _companyDocPath == null) {
-      message = 'Surat operasional wajib dilampirkan.';
-    } else if ((_usagePurpose == 'Pertanian' || _usagePurpose == 'Nelayan') &&
-        _farmerDocPath == null) {
-      message = 'Surat rekomendasi wajib dilampirkan.';
+    } else if ((_usageType == 'OJOL' || _usageType == 'UMKM') &&
+        _productiveBusinessDocPath == null) {
+      message = 'Bukti Usaha Produktif wajib dilampirkan.';
     } else if (!_agreeData || !_agreeRisk || !_agreeAi) {
       message = 'Semua persetujuan wajib dicentang.';
     }

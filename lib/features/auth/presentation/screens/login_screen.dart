@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../data/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,24 +13,64 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _loginFormKey = GlobalKey<FormState>();
+  final _authRepository = AuthRepository();
   bool _autoValidateLogin = false;
-  final _nikController = TextEditingController();
+  bool _isSubmitting = false;
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _nikController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitLogin() async {
+    final isValid = _loginFormKey.currentState?.validate() ?? false;
+    if (!isValid) {
+      setState(() {
+        _autoValidateLogin = true;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await _authRepository.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      if (!mounted) {
+        return;
+      }
+      context.go('/home');
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Masuk'),
-      ),
+      appBar: AppBar(title: const Text('Masuk')),
       body: SafeArea(
         child: Column(
           children: [
@@ -47,36 +87,34 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         'Selamat datang kembali',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Masuk untuk mengelola subsidi BBM Anda.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        controller: _nikController,
+                        controller: _emailController,
                         decoration: const InputDecoration(
-                          labelText: 'NIK',
-                          hintText: 'Masukkan NIK',
+                          labelText: 'Email',
+                          hintText: 'Masukkan email',
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
                         validator: (value) {
                           final trimmed = value?.trim() ?? '';
                           if (trimmed.isEmpty) {
                             return 'Form wajib diisi';
                           }
-                          if (!RegExp(r'^\d{16}$').hasMatch(trimmed)) {
-                            return 'NIK harus 16 angka';
+                          if (!RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(trimmed)) {
+                            return 'Email tidak valid';
                           }
                           return null;
                         },
@@ -114,17 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final isValid =
-                              _loginFormKey.currentState?.validate() ?? false;
-                          if (!isValid) {
-                            setState(() {
-                              _autoValidateLogin = true;
-                            });
-                            return;
-                          }
-                          context.go('/home');
-                        },
+                        onPressed: _isSubmitting ? null : _submitLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryRed,
                           foregroundColor: Colors.white,
@@ -133,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text('Masuk'),
+                        child: Text(_isSubmitting ? 'Memproses...' : 'Masuk'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -142,9 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           'Belum punya akun? ',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                         TextButton(

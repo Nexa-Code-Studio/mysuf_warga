@@ -45,34 +45,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const SplashScreen(),
-        ),
+        pageBuilder: (context, state) => _fadePage(state, const SplashScreen()),
       ),
       GoRoute(
         path: '/onboarding',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const OnboardingScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const OnboardingScreen()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const LoginScreen(),
-        ),
+        pageBuilder: (context, state) => _fadePage(state, const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
         pageBuilder: (context, state) => _fadePage(
           state,
           RegisterScreen(
-            initialStep: int.tryParse(
-                  state.uri.queryParameters['step'] ?? '1',
-                ) ??
-                1,
+            initialStep:
+                int.tryParse(state.uri.queryParameters['step'] ?? '1') ?? 1,
           ),
         ),
       ),
@@ -80,29 +70,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/register/processing',
         pageBuilder: (context, state) => _fadePage(
           state,
-          const RegistrationProcessingScreen(),
+          RegistrationProcessingScreen(
+            attemptId: state.uri.queryParameters['attempt_id'],
+          ),
         ),
       ),
       GoRoute(
         path: '/logout-processing',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const LogoutProcessingScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const LogoutProcessingScreen()),
       ),
       GoRoute(
         path: '/verification',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const SubsidyVerificationScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const SubsidyVerificationScreen()),
       ),
       GoRoute(
         path: '/notifications',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const NotificationsScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const NotificationsScreen()),
       ),
       GoRoute(
         path: '/auth/ktp-capture',
@@ -140,6 +126,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth/nik-kk',
         redirect: (_, __) => '/register?step=3',
       ),
+      GoRoute(path: '/auth/ocr-ktp', redirect: (_, _) => '/register?step=2'),
+      GoRoute(path: '/auth/selfie', redirect: (_, _) => '/register?step=3'),
+      GoRoute(path: '/auth/nik-kk', redirect: (_, _) => '/register?step=3'),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AppScaffold(child: child),
@@ -155,109 +144,81 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'spbu',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const SpbuNearbyScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const SpbuNearbyScreen()),
               ),
               GoRoute(
                 path: 'quota',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const QuotaScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const QuotaScreen()),
               ),
               GoRoute(
                 path: 'risk',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const RiskScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const RiskScreen()),
               ),
             ],
           ),
           GoRoute(
             path: '/vehicles',
-            pageBuilder: (context, state) => _fadePage(
-              state,
-              const VehicleListScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                _fadePage(state, const VehicleListScreen()),
             routes: [
               GoRoute(
                 path: 'detail',
                 pageBuilder: (context, state) => _fadePage(
                   state,
-                  VehicleDetailScreen(
-                    vehicle: state.extra! as Vehicle,
-                  ),
+                  VehicleDetailScreen(vehicle: state.extra! as Vehicle),
                 ),
               ),
               GoRoute(
                 path: 'add',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const AddVehicleScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const AddVehicleScreen()),
               ),
               GoRoute(
                 path: 'family',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const FamilyListScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const FamilyListScreen()),
               ),
             ],
           ),
           GoRoute(
             path: '/wallet',
-            pageBuilder: (context, state) => _fadePage(
-              state,
-              const WalletScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                _fadePage(state, const WalletScreen()),
             routes: [
               GoRoute(
                 path: 'topup',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const TopUpScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const TopUpScreen()),
               ),
             ],
           ),
           GoRoute(
             path: '/transactions',
-            pageBuilder: (context, state) => _fadePage(
-              state,
-              const TransactionHistoryScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                _fadePage(state, const TransactionHistoryScreen()),
           ),
           GoRoute(
             path: '/profile',
-            pageBuilder: (context, state) => _fadePage(
-              state,
-              const ProfileScreen(),
-            ),
+            pageBuilder: (context, state) =>
+                _fadePage(state, const ProfileScreen()),
             routes: [
               GoRoute(
                 path: 'detail',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const ProfileDetailScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const ProfileDetailScreen()),
               ),
               GoRoute(
                 path: 'notifications',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const NotificationSettingsScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const NotificationSettingsScreen()),
               ),
               GoRoute(
                 path: 'help',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  const HelpCenterScreen(),
-                ),
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const HelpCenterScreen()),
               ),
             ],
           ),
@@ -271,7 +232,7 @@ CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
   return CustomTransitionPage(
     key: state.pageKey,
     child: child,
-    transitionsBuilder: (_, animation, __, child) {
+    transitionsBuilder: (_, animation, _, child) {
       final curved = CurvedAnimation(parent: animation, curve: Curves.easeOut);
       return FadeTransition(
         opacity: curved,

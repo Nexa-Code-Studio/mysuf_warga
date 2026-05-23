@@ -10,44 +10,61 @@ class OcrService {
     final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
 
     String nik = '';
+    // Combine all extracted text blocks and remove all whitespace (handling spaces inside NIK)
+    final String rawText = recognizedText.text;
+    
+    print('============================================================');
+    print('   [DART OCR DEBUG] MEMULAI PROSES SCAN KTP');
+    print('============================================================');
+    print('1. TEKS MENTAH HASIL BACAAN GOOGLE ML KIT:');
+    print(rawText);
+    print('------------------------------------------------------------');
 
-    final RegExp nikRegex = RegExp(r'\b\d{16}\b');
+    final String cleanedText = rawText.replaceAll(RegExp(r'\s+'), '');
+    print('2. TEKS SETELAH DIHAPUS SPASI & NEWLINE:');
+    print(cleanedText);
+    print('------------------------------------------------------------');
 
-    List<String> lines = [];
-    for (TextBlock block in recognizedText.blocks) {
-      for (TextLine line in block.lines) {
-        lines.add(line.text.trim());
-      }
+    // Normalize common OCR misread letters back to their correct digits
+    // (e.g. 1 as I, L, l, i, |, !, /, \ or 0 as O, o, D)
+    final String normalizedText = cleanedText
+        .replaceAll(RegExp(r'[ILli!/\\\[\]]'), '1')
+        .replaceAll(RegExp(r'[OoD]'), '0')
+        .replaceAll(RegExp(r'[Ss]'), '5')
+        .replaceAll(RegExp(r'[Bb]'), '8');
+    
+    print('3. TEKS SETELAH NORMALISASI ANGKAL (FAUL TOLERANT):');
+    print(normalizedText);
+    print('------------------------------------------------------------');
+
+    // Search for 16 consecutive digits in the normalized text
+    final RegExp nikRegex = RegExp(r'\d{16}');
+    final match = nikRegex.firstMatch(normalizedText);
+    if (match != null) {
+      nik = match.group(0)!;
+      print('4. HASIL EKSTRAKSI: BERHASIL MENEMUKAN NIK -> $nik');
+    } else {
+      print('4. HASIL EKSTRAKSI: GAGAL! Tidak ditemukan 16 digit angka berurutan.');
     }
-
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-
-      if (nik.isEmpty) {
-        final match = nikRegex.firstMatch(line.replaceAll(RegExp(r'\s+'), ''));
-        if (match != null) {
-          nik = match.group(0)!;
-          break; // Stop parsing once NIK is found
-        }
-      }
-    }
+    print('============================================================\n');
 
     // Simulasi ambil dari database berdasarkan NIK
     if (nik.isNotEmpty) {
       return KtpData(
         nik: nik,
-        nama: 'JOHN DOE', // Simulasi dari database
-        tempatTanggalLahir: 'JAKARTA, 01-01-1990',
-        jenisKelamin: 'LAKI-LAKI',
-        alamat: 'JL. MERDEKA NO 1',
-        rtrw: '001/002',
-        kelDesa: 'GAMBIR',
-        kecamatan: 'GAMBIR',
-        agama: 'ISLAM',
-        statusPerkawinan: 'BELUM KAWIN',
-        pekerjaan: 'KARYAWAN SWASTA',
-        kewarganegaraan: 'WNI',
-        berlakuHingga: 'SEUMUR HIDUP',
+        nama: '',
+        tempatTanggalLahir: '',
+        jenisKelamin: '',
+        alamat: '',
+        rtrw: '',
+        kelDesa: '',
+        kecamatan: '',
+        agama: '',
+        statusPerkawinan: '',
+        pekerjaan: '',
+        kewarganegaraan: '',
+        berlakuHingga: '',
+        ocrRawText: recognizedText.text,
       );
     } else {
       return KtpData.empty();
