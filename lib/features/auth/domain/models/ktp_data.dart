@@ -12,6 +12,7 @@ class KtpData {
   final String pekerjaan;
   final String kewarganegaraan;
   final String berlakuHingga;
+  final String ocrRawText;
 
   KtpData({
     required this.nik,
@@ -27,6 +28,7 @@ class KtpData {
     this.pekerjaan = '',
     this.kewarganegaraan = '',
     this.berlakuHingga = '',
+    this.ocrRawText = '',
   });
 
   factory KtpData.empty() {
@@ -63,6 +65,7 @@ class KtpData {
     String? pekerjaan,
     String? kewarganegaraan,
     String? berlakuHingga,
+    String? ocrRawText,
   }) {
     return KtpData(
       nik: nik ?? this.nik,
@@ -78,6 +81,7 @@ class KtpData {
       pekerjaan: pekerjaan ?? this.pekerjaan,
       kewarganegaraan: kewarganegaraan ?? this.kewarganegaraan,
       berlakuHingga: berlakuHingga ?? this.berlakuHingga,
+      ocrRawText: ocrRawText ?? this.ocrRawText,
     );
   }
 }

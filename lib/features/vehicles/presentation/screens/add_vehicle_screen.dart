@@ -5,9 +5,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../data/vehicle_api_repository.dart';
+import '../../domain/vehicle_submission_result.dart';
 import '../../../verification/presentation/screens/steps/verification_form_state.dart';
 import '../../../verification/presentation/screens/steps/verification_form_widgets.dart';
-import '../../../verification/presentation/screens/steps/verification_step_additional_docs.dart';
 import '../../../verification/presentation/screens/steps/verification_step_review.dart';
 import '../../../verification/presentation/screens/steps/verification_step_usage.dart';
 import '../../../verification/presentation/screens/steps/verification_step_vehicle.dart';
@@ -21,11 +22,7 @@ class AddVehicleScreen extends StatefulWidget {
 
 class _AddVehicleScreenState extends State<AddVehicleScreen> {
   int _currentStep = 0;
-  String _vehicleCategory = 'Sepeda Motor';
-  String _ownershipStatus = 'Milik Pribadi';
-  String _usagePurpose = 'Pribadi (Non-Komersial)';
-  String _businessCategory = 'Non-komersial';
-  String _usageIntensity = 'Normal';
+  String _usageType = 'PERSONAL';
   bool _sharedVehicle = false;
   bool _agreeData = false;
   bool _agreeRisk = false;
@@ -33,13 +30,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   final _controllers = VerificationFormControllers();
   final _picker = ImagePicker();
+  final _vehicleRepository = VehicleApiRepository();
 
   String? _stnkPhotoPath;
   String? _vehiclePhotoPath;
-  String? _businessDocPath;
-  String? _driverDocPath;
-  String? _companyDocPath;
-  String? _farmerDocPath;
+  String? _productiveBusinessDocPath;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -80,20 +76,29 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                     const SizedBox(width: 12),
                   ],
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _handleContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryRed,
-                        foregroundColor: Colors.white,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _handleContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: Text(_isLastStep ? 'Submit' : 'Lanjut'),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(_isLastStep ? 'Submit' : 'Lanjut'),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
               ),
             ),
           ],
@@ -106,15 +111,13 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
 
   List<String> get _stepTitles => const [
         'Linking Kendaraan',
-        'Kepemilikan & Penggunaan',
+        'Penggunaan & Dokumen Tambahan',
         'Kondisi Rumah Tangga',
-        'Dokumen Tambahan',
         'Pakta Integritas',
       ];
 
   List<Widget> get _stepWidgets => [
         VerificationVehicleStep(
-          vehicleCategory: _vehicleCategory,
           controllers: _controllers,
           stnkFileName: _fileLabel(_stnkPhotoPath),
           vehicleFileName: _fileLabel(_vehiclePhotoPath),
@@ -126,58 +129,25 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             ImageSource.camera,
             (path) => _vehiclePhotoPath = path,
           ),
-          onCategoryChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _vehicleCategory = value;
-            });
-          },
         ),
         VerificationUsageStep(
-          ownershipStatus: _ownershipStatus,
-          usagePurpose: _usagePurpose,
-          businessCategory: _businessCategory,
-          usageIntensity: _usageIntensity,
-          controllers: _controllers,
-          purposeOptions: _purposeOptions,
-          onOwnershipChanged: (value) {
+          usageType: _usageType,
+          onUsageTypeChanged: (value) {
             if (value == null) {
               return;
             }
             setState(() {
-              _ownershipStatus = value;
-              if (value == 'Milik Perusahaan' &&
-                  _usagePurpose == 'Pribadi (Non-Komersial)') {
-                _usagePurpose = 'Operasional Usaha';
-              }
+              _usageType = value;
             });
           },
-          onPurposeChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _usagePurpose = value;
-            });
-          },
-          onBusinessChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _businessCategory = value;
-            });
-          },
-          onIntensityChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              _usageIntensity = value;
-            });
-          },
+          productiveBusinessDocName: _fileLabel(_productiveBusinessDocPath),
+          onProductiveBusinessCamera: () => _pickImage(
+            ImageSource.camera,
+            (path) => _productiveBusinessDocPath = path,
+          ),
+          onProductiveBusinessPick: () => _pickFile(
+            (path) => _productiveBusinessDocPath = path,
+          ),
         ),
         _HouseholdOnlyStep(
           sharedVehicle: _sharedVehicle,
@@ -186,43 +156,6 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
               _sharedVehicle = value;
             });
           },
-        ),
-        VerificationAdditionalDocsStep(
-          usagePurpose: _usagePurpose,
-          ownershipStatus: _ownershipStatus,
-          controllers: _controllers,
-          businessDocName: _fileLabel(_businessDocPath),
-          driverDocName: _fileLabel(_driverDocPath),
-          companyDocName: _fileLabel(_companyDocPath),
-          farmerDocName: _fileLabel(_farmerDocPath),
-          onBusinessCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _businessDocPath = path,
-          ),
-          onBusinessPick: () => _pickFile(
-            (path) => _businessDocPath = path,
-          ),
-          onDriverCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _driverDocPath = path,
-          ),
-          onDriverPick: () => _pickFile(
-            (path) => _driverDocPath = path,
-          ),
-          onCompanyCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _companyDocPath = path,
-          ),
-          onCompanyPick: () => _pickFile(
-            (path) => _companyDocPath = path,
-          ),
-          onFarmerCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _farmerDocPath = path,
-          ),
-          onFarmerPick: () => _pickFile(
-            (path) => _farmerDocPath = path,
-          ),
         ),
         VerificationReviewStep(
           agreeData: _agreeData,
@@ -246,30 +179,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         ),
       ];
 
-  List<String> get _purposeOptions {
-    if (_ownershipStatus == 'Milik Perusahaan') {
-      return const [
-        'Operasional Usaha',
-        'Logistik',
-        'Driver Ojol',
-        'Pertanian',
-        'Nelayan',
-      ];
-    }
-    return const [
-      'Pribadi (Non-Komersial)',
-      'Operasional Usaha',
-      'Logistik',
-      'Driver Ojol',
-      'Pertanian',
-      'Nelayan',
-    ];
-  }
-
-  void _handleContinue() {
+  Future<void> _handleContinue() async {
     if (_isLastStep) {
       if (_validateBeforeSubmit()) {
-        _showSuccessDialog();
+        await _submitVehicle();
       }
       return;
     }
@@ -329,40 +242,11 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       message = 'Foto STNK wajib diambil.';
     } else if (_vehiclePhotoPath == null) {
       message = 'Foto kendaraan wajib diambil.';
-    } else if (_controllers.plateNumber.text.trim().isEmpty) {
-      message = 'Nomor polisi wajib diisi.';
     } else if (_controllers.stnkNumber.text.trim().isEmpty) {
       message = 'Nomor STNK wajib diisi.';
-    } else if (_ownershipStatus == 'Milik Perusahaan' &&
-        _controllers.companyName.text.trim().isEmpty) {
-      message = 'Nama perusahaan wajib diisi.';
-    } else if (_ownershipStatus == 'Milik Perusahaan' &&
-        _controllers.companyId.text.trim().isEmpty) {
-      message = 'ID perusahaan wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _controllers.businessName.text.trim().isEmpty) {
-      message = 'Nama usaha wajib diisi.';
-    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
-        _controllers.workLocation.text.trim().isEmpty) {
-      message = 'Lokasi kerja/usaha wajib diisi.';
-    } else if (_usagePurpose != 'Pribadi (Non-Komersial)' &&
-        _controllers.distance.text.trim().isEmpty) {
-      message = 'Estimasi jarak wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _controllers.nibNumber.text.trim().isEmpty) {
-      message = 'Nomor NIB/SKU wajib diisi.';
-    } else if (_usagePurpose == 'Operasional Usaha' &&
-        _businessDocPath == null) {
-      message = 'Dokumen NIB/SKU wajib dilampirkan.';
-    } else if (_usagePurpose == 'Driver Ojol' && _driverDocPath == null) {
-      message = 'Bukti driver aktif wajib dilampirkan.';
-    } else if ((_ownershipStatus == 'Milik Perusahaan' ||
-            _usagePurpose == 'Logistik') &&
-        _companyDocPath == null) {
-      message = 'Surat operasional wajib dilampirkan.';
-    } else if ((_usagePurpose == 'Pertanian' || _usagePurpose == 'Nelayan') &&
-        _farmerDocPath == null) {
-      message = 'Surat rekomendasi wajib dilampirkan.';
+    } else if ((_usageType == 'OJOL' || _usageType == 'UMKM') &&
+        _productiveBusinessDocPath == null) {
+      message = 'Bukti Usaha Produktif wajib dilampirkan.';
     } else if (!_agreeData || !_agreeRisk || !_agreeAi) {
       message = 'Semua persetujuan wajib dicentang.';
     }
@@ -439,6 +323,102 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showPendingReviewDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pengajuan sedang ditinjau',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Dokumen kendaraan usaha Anda berhasil dikirim dan sedang diperiksa admin. Kami akan mengaktifkan kendaraan setelah verifikasi selesai.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      context.go('/vehicles');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Kembali ke Kendaraan'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _submitVehicle() async {
+    final stnkPhotoPath = _stnkPhotoPath;
+    final vehiclePhotoPath = _vehiclePhotoPath;
+    if (stnkPhotoPath == null || vehiclePhotoPath == null) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final result = await _vehicleRepository.submitVehicle(
+        registrationNumber: _controllers.stnkNumber.text.trim(),
+        usageType: _usageType,
+        stnkPhotoPath: stnkPhotoPath,
+        vehiclePhotoPath: vehiclePhotoPath,
+        productiveBusinessProofPath: _productiveBusinessDocPath,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (result.submissionType == VehicleSubmissionType.pendingReview) {
+        await _showPendingReviewDialog();
+      } else {
+        await _showSuccessDialog();
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 }
 

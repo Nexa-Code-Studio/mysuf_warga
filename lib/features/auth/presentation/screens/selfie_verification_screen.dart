@@ -26,7 +26,8 @@ class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
         builder: (_) => const CameraCaptureScreen(
           title: 'Ambil Selfie',
           actionLabel: 'Ambil Selfie',
-          helperText: 'Pegang KTP di area kartu, wajah di area lingkaran.',
+          helperText:
+              'Posisikan wajah di dalam oval, lihat lurus ke kamera, dan pastikan hanya satu wajah yang terlihat.',
           lensDirection: CameraLensDirection.front,
           overlayType: CameraOverlayType.selfieKtp,
         ),
@@ -57,15 +58,15 @@ class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
               Text(
                 'Ambil selfie',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Gunakan pencahayaan yang baik dan wajah terlihat jelas.',
+                'Gunakan pencahayaan yang baik, wajah terlihat jelas, dan jangan masukkan KTP ke dalam frame selfie.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 24),
               AppCard(
@@ -120,16 +121,14 @@ class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline,
-                        color: AppColors.primaryRed),
+                    const Icon(Icons.info_outline, color: AppColors.primaryRed),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Selfie digunakan untuk mencocokkan data KTP. Pastikan wajah terlihat jelas dan tidak tertutup.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: AppColors.textSecondary),
+                        'Selfie digunakan untuk mencocokkan wajah Anda dengan foto pada KTP. Pastikan hanya satu wajah terlihat dan tidak tertutup.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -150,11 +149,10 @@ class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Foto selfie disimpan aman dan hanya digunakan untuk proses verifikasi identitas.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: AppColors.textSecondary),
+                        'Foto selfie disimpan aman dan hanya digunakan untuk proses verifikasi identitas. Lepas masker dan hindari kacamata gelap bila memungkinkan.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -178,7 +176,7 @@ class _SelfieVerificationScreenState extends State<SelfieVerificationScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text('Validasi NIK & KK'),
