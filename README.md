@@ -1,62 +1,39 @@
-# MySuF Mobile (Frontend)
+# MySuF Mobile (Warga Application)
 
-MySuF (Smart Subsidized Fuel Ecosystem) is a Flutter frontend for citizen-facing services such as quota monitoring, wallet, transaction history, and vehicle/family linking. This repository focuses on UI only and uses mock/local data for now.
+Aplikasi mobile Warga untuk ekosistem **MySuF (Smart Subsidized Fuel Ecosystem)**. Aplikasi ini dibangun menggunakan Flutter dan terintegrasi secara dinamis dengan backend untuk mengelola pemantauan kuota subsidi BBM, riwayat transaksi finansial, transfer saldo dompet digital, pengaturan keamanan PIN, dan penerimaan Push Notification real-time.
 
-## Tech Stack
+---
 
-- Flutter
-- Riverpod
-- Go Router
-- Dio (reserved for API integration)
-- Shared Preferences
-- Flutter Secure Storage
-- Flutter ScreenUtil
-- Flutter SVG
-- Google Fonts
-- Flutter Animate
+## 🛠️ Langkah Menjalankan Aplikasi
 
-## Project Structure
+Ikuti panduan berikut untuk menghubungkan dan menjalankan aplikasi pada perangkat fisik atau emulator Android Anda.
 
-```
-lib/
-	core/
-	features/
-	routes/
-	shared/
+### 1. Sinkronisasi Port Android (ADB Reverse)
+Sebelum menjalankan aplikasi, pastikan port lokal mesin pengembang terhubung ke perangkat/emulator Anda agar koneksi localhost API berjalan lancar:
+```bash
+adb reverse tcp:8080 tcp:8080
 ```
 
-Each feature follows clean architecture:
-
-```
-features/<feature_name>/
-	data/
-	domain/
-	presentation/
-```
-
-## Setup
-
-1. Install Flutter (3.22+ recommended).
-2. Get packages:
-
-```
+### 2. Dapatkan Dependensi Flutter
+Pasang pustaka dan dependensi proyek:
+```bash
 flutter pub get
 ```
 
-3. Run the app:
-
+### 3. Jalankan Aplikasi dengan Base URL API
+Jalankan aplikasi Flutter menggunakan konstanta `--dart-define` untuk mengarahkan request HTTP ke server lokal backend Anda (biasanya port `8080`):
+```bash
+flutter run --dart-define=MYSUF_API_BASE_URL=http://10.0.2.2:8080/api/v1
 ```
-flutter run
-```
 
-## Notes
+> [!TIP]
+> IP `10.0.2.2` adalah rute default Android Emulator untuk mengakses port localhost pada mesin induk Anda. Jika menggunakan perangkat fisik, Anda bisa mencocokkannya dengan IP lokal komputer Anda atau menggunakan `http://localhost:8080/api/v1` jika port forwarding `adb reverse` aktif.
 
-- This project is UI-only. Backend/API integration will be added later.
-- All data is currently mocked in `lib/core/services/mock_api.dart`.
-- Navigation uses Go Router with a 5-tab bottom navigation layout.
+---
 
-## Next Steps
+## 💎 Fitur Unggulan Terintegrasi
 
-- Connect API endpoints with Dio.
-- Add real authentication and secure storage flows.
-- Expand models and validation rules for production.
+*   **Autentikasi & Penghapusan Sesi Aman**: Integrasi token JWT (Access/Refresh token) via Flutter Secure Storage. Sesi lokal dan seluruh cache data sensitif diatur ulang secara bersih menggunakan invalidasi Riverpod saat logout untuk mencegah kebocoran data antar-akun.
+*   **Persistent & Push Notifications**: Sistem push notifikasi dinamis terintegrasi penuh dengan Firebase Cloud Messaging (FCM).
+*   **State Management Modern (Riverpod 3.x)**: Menggunakan kelas notifier asinkron terpadu (`AsyncNotifier`) untuk rendering state UI yang bersih.
+*   **Optimistic UI Updates**: Transaksi finansial atau status notifikasi dibaca memberikan umpan balik visual instan di antarmuka sebelum sinkronisasi backend selesai, memberikan pengalaman pengguna yang sangat responsif dan premium.
