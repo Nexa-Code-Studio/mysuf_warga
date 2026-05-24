@@ -37,16 +37,22 @@ class MockApi {
     await Future<void>.delayed(const Duration(milliseconds: 350));
     return const [
       Vehicle(
+        ownershipId: 'ownership-1',
+        vehicleId: 'vehicle-1',
         plateNumber: 'B 1234 ABC',
         typeLabel: 'Roda 4 - Sedan',
         category: VehicleCategory.nonCommercial,
         isActive: true,
+        usageType: 'PERSONAL',
       ),
       Vehicle(
+        ownershipId: 'ownership-2',
+        vehicleId: 'vehicle-2',
         plateNumber: 'B 9234 SFD',
         typeLabel: 'Roda 2 - Motor',
         category: VehicleCategory.nonCommercial,
         isActive: true,
+        usageType: 'PERSONAL',
       ),
     ];
   }

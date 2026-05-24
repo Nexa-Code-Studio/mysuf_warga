@@ -46,6 +46,29 @@ class AuthRepository {
     }
   }
 
+  Future<AuthSession> refreshSession(String refreshToken) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: {
+          'refresh_token': refreshToken,
+          'client_type': 'BUYER_ANDROID',
+        },
+      );
+
+      final payload = response.data;
+      if (payload == null) {
+        throw Exception('Backend tidak mengembalikan data refresh token.');
+      }
+
+      final session = AuthSession.fromJson(payload);
+      await _secureStorage.saveSession(session);
+      return session;
+    } on DioException catch (error) {
+      throw Exception(_extractErrorMessage(error));
+    }
+  }
+
   Future<RegistrationAttempt> submitRegistrationAttempt({
     required String nik,
     required String email,

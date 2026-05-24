@@ -1,18 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/mock_api.dart';
+import '../../features/risk/data/risk_repository.dart';
 import '../models/family_member.dart';
 import '../models/quota.dart';
 import '../models/transaction.dart';
 import '../models/user_profile.dart';
 import '../models/vehicle.dart';
-import '../models/wallet.dart';
+import '../../features/profile/data/profile_repository.dart';
 import '../../features/risk/domain/risk_state.dart';
 
 final mockApiProvider = Provider<MockApi>((ref) => MockApi());
 
+final profileRepositoryProvider = Provider<ProfileRepository>((ref) => ProfileRepository());
+
 final profileProvider = FutureProvider<UserProfile>((ref) async {
-  return ref.read(mockApiProvider).fetchProfile();
+  final state = await ref.read(profileRepositoryProvider).fetchProfile();
+  return state.profile;
 });
 
 final quotaProvider = FutureProvider<Quota>((ref) async {
@@ -31,10 +35,10 @@ final transactionsProvider = FutureProvider<List<TransactionItem>>((ref) async {
   return ref.read(mockApiProvider).fetchTransactions();
 });
 
-final walletProvider = FutureProvider<WalletSummary>((ref) async {
-  return ref.read(mockApiProvider).fetchWallet();
-});
+
+
+final riskRepositoryProvider = Provider<RiskRepository>((ref) => RiskRepository());
 
 final riskProvider = FutureProvider<RiskState>((ref) async {
-  return ref.read(mockApiProvider).fetchRiskStatus();
+  return ref.read(riskRepositoryProvider).fetchRisk();
 });

@@ -18,4 +18,17 @@ class UserProfile {
     required this.quotaRemaining,
     required this.walletBalance,
   });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      name: json['name'] as String? ?? '',
+      nikMasked: json['nikMasked'] as String? ?? '',
+      isVerified: json['isVerified'] as bool? ?? false,
+      isEligible: json['isEligible'] as bool? ?? false,
+      familyCardNumber: json['familyCardNumber'] as String? ?? '',
+      vehiclesCount: json['vehiclesCount'] as int? ?? 0,
+      quotaRemaining: json['quotaRemaining'] as int? ?? 0,
+      walletBalance: json['walletBalance'] as int? ?? 0,
+    );
+  }
 }

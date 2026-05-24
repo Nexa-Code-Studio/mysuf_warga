@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../data/vehicle_api_repository.dart';
+import '../../data/vehicle_providers.dart';
 import '../../domain/vehicle_submission_result.dart';
 import '../../../verification/presentation/screens/steps/verification_form_state.dart';
 import '../../../verification/presentation/screens/steps/verification_form_widgets.dart';
@@ -108,47 +110,70 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   bool get _isLastStep => _currentStep == _stepWidgets.length - 1;
+  bool get _skipHouseholdStep => _usageType == 'OJOL' || _usageType == 'UMKM';
 
-  List<String> get _stepTitles => const [
-        'Linking Kendaraan',
-        'Penggunaan & Dokumen Tambahan',
-        'Kondisi Rumah Tangga',
-        'Pakta Integritas',
-      ];
+  List<String> get _stepTitles {
+    const baseSteps = [
+      'Linking Kendaraan',
+      'Penggunaan & Dokumen Tambahan',
+      'Pakta Integritas',
+    ];
+    if (_skipHouseholdStep) {
+      return baseSteps;
+    }
+    return const [
+      'Linking Kendaraan',
+      'Penggunaan & Dokumen Tambahan',
+      'Kondisi Rumah Tangga',
+      'Pakta Integritas',
+    ];
+  }
 
-  List<Widget> get _stepWidgets => [
-        VerificationVehicleStep(
-          controllers: _controllers,
-          stnkFileName: _fileLabel(_stnkPhotoPath),
-          vehicleFileName: _fileLabel(_vehiclePhotoPath),
-          onStnkCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _stnkPhotoPath = path,
-          ),
-          onVehicleCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _vehiclePhotoPath = path,
-          ),
+  List<Widget> get _stepWidgets {
+    final steps = <Widget>[
+      VerificationVehicleStep(
+        controllers: _controllers,
+        stnkFileName: _fileLabel(_stnkPhotoPath),
+        vehicleFileName: _fileLabel(_vehiclePhotoPath),
+        onStnkCamera: () => _pickImage(
+          ImageSource.camera,
+          (path) => _stnkPhotoPath = path,
         ),
-        VerificationUsageStep(
-          usageType: _usageType,
+        onVehicleCamera: () => _pickImage(
+          ImageSource.camera,
+          (path) => _vehiclePhotoPath = path,
+        ),
+      ),
+      VerificationUsageStep(
+        usageType: _usageType,
           onUsageTypeChanged: (value) {
             if (value == null) {
               return;
             }
             setState(() {
               _usageType = value;
+              if (_skipHouseholdStep) {
+                _sharedVehicle = false;
+              }
+              final maxStepIndex = _stepTitles.length - 1;
+              if (_currentStep > maxStepIndex) {
+                _currentStep = maxStepIndex;
+              }
             });
           },
-          productiveBusinessDocName: _fileLabel(_productiveBusinessDocPath),
-          onProductiveBusinessCamera: () => _pickImage(
-            ImageSource.camera,
-            (path) => _productiveBusinessDocPath = path,
-          ),
-          onProductiveBusinessPick: () => _pickFile(
-            (path) => _productiveBusinessDocPath = path,
-          ),
+        productiveBusinessDocName: _fileLabel(_productiveBusinessDocPath),
+        onProductiveBusinessCamera: () => _pickImage(
+          ImageSource.camera,
+          (path) => _productiveBusinessDocPath = path,
         ),
+        onProductiveBusinessPick: () => _pickFile(
+          (path) => _productiveBusinessDocPath = path,
+        ),
+      ),
+    ];
+
+    if (!_skipHouseholdStep) {
+      steps.add(
         _HouseholdOnlyStep(
           sharedVehicle: _sharedVehicle,
           onSharedChanged: (value) {
@@ -157,27 +182,34 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
             });
           },
         ),
-        VerificationReviewStep(
-          agreeData: _agreeData,
-          agreeRisk: _agreeRisk,
-          agreeAi: _agreeAi,
-          onAgreeData: (value) {
-            setState(() {
-              _agreeData = value ?? false;
-            });
-          },
-          onAgreeRisk: (value) {
-            setState(() {
-              _agreeRisk = value ?? false;
-            });
-          },
-          onAgreeAi: (value) {
-            setState(() {
-              _agreeAi = value ?? false;
-            });
-          },
-        ),
-      ];
+      );
+    }
+
+    steps.add(
+      VerificationReviewStep(
+        agreeData: _agreeData,
+        agreeRisk: _agreeRisk,
+        agreeAi: _agreeAi,
+        onAgreeData: (value) {
+          setState(() {
+            _agreeData = value ?? false;
+          });
+        },
+        onAgreeRisk: (value) {
+          setState(() {
+            _agreeRisk = value ?? false;
+          });
+        },
+        onAgreeAi: (value) {
+          setState(() {
+            _agreeAi = value ?? false;
+          });
+        },
+      ),
+    );
+
+    return steps;
+  }
 
   Future<void> _handleContinue() async {
     if (_isLastStep) {
@@ -401,8 +433,12 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       }
 
       if (result.submissionType == VehicleSubmissionType.pendingReview) {
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.invalidate(pendingVehicleRequestsProvider);
         await _showPendingReviewDialog();
       } else {
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.invalidate(buyerVehiclesProvider);
         await _showSuccessDialog();
       }
     } catch (error) {

@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../shared/providers/mock_providers.dart';
+import '../../../../shared/models/wallet_transaction.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../data/wallet_providers.dart';
+import 'package:intl/intl.dart';
 
 class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
@@ -17,92 +19,128 @@ class WalletScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wallet = ref.watch(walletProvider);
-    final transactions = ref.watch(transactionsProvider);
+    final transactions = ref.watch(walletTransactionsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          children: [
-            wallet.when(
-              data: (data) => AppCard(
-                color: AppColors.primaryRed,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'E-Wallet',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: Colors.white70),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(999),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(walletProvider);
+            ref.invalidate(walletTransactionsProvider);
+            try {
+              await Future.wait([
+                ref.read(walletProvider.future),
+                ref.read(walletTransactionsProvider.future),
+              ]);
+            } catch (_) {}
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+              wallet.when(
+                data: (data) => AppCard(
+                  color: AppColors.primaryRed,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'E-Wallet',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.white70),
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.success,
-                                  shape: BoxShape.circle,
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                data.isActive ? 'Aktif' : 'Nonaktif',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                                const SizedBox(width: 6),
+                                Text(
+                                  data.isActive ? 'Aktif' : 'Nonaktif',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Saldo E-KTP',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        formatCurrencyIdr(data.balance),
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        data.nikMasked != null
+                            ? 'NIK ${data.nikMasked}'
+                            : 'NIK **** **** ${data.walletIdMasked}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                loading: () => const LoadingSkeleton(height: 160),
+                error: (error, _) => AppCard(
+                  color: AppColors.primaryRed.withOpacity(0.1),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.primaryRed, size: 36),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Gagal memuat saldo: ${error.toString().replaceAll('Exception: ', '')}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(walletProvider),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Saldo E-KTP',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      formatCurrencyIdr(data.balance),
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'NIK **** **** ${data.walletIdMasked}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.white70),
-                    ),
-                  ],
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              loading: () => const LoadingSkeleton(height: 160),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
             Row(
               children: [
                 _WalletAction(
@@ -142,7 +180,7 @@ class WalletScreen extends ConsumerWidget {
                       label: 'QRIS',
                       subtitle: 'Scan QR untuk bayar',
                       icon: Icons.qr_code_2,
-                      onTap: () {},
+                      onTap: () => context.go('/wallet/qris'),
                     ),
                   ),
                 ],
@@ -156,79 +194,184 @@ class WalletScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             transactions.when(
-              data: (items) => Column(
-                children: items
-                    .take(3)
-                    .map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: AppCard(
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: AppColors.softGray,
-                                child: Icon(
-                                  item.amount >= 0
-                                      ? Icons.south_west
-                                      : Icons.local_gas_station,
-                                  color: AppColors.primaryRed,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall
-                                          ?.copyWith(fontWeight: FontWeight.w700),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.dateTimeLabel,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                '${item.amount >= 0 ? '+' : '-'}${formatCurrencyIdr(item.amount.abs())}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: item.amount >= 0
-                                          ? AppColors.success
-                                          : AppColors.textPrimary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
+              data: (items) {
+                if (items.isEmpty) {
+                  return AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 40,
+                            color: Colors.grey.shade400,
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Belum ada transaksi',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                    )
-                    .toList(),
+                    ),
+                  );
+                }
+                return Column(
+                  children: items
+                      .take(3)
+                      .map(
+                        (item) {
+                          final isIncoming = item.transactionFlow == TransactionFlow.inflow;
+                          final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt);
+                          
+                          IconData icon;
+                          Color iconColor;
+                          Color bgIconColor;
+
+                          switch (item.type) {
+                            case TransactionType.topUp:
+                              icon = Icons.add_card_rounded;
+                              iconColor = AppColors.success;
+                              bgIconColor = AppColors.success.withOpacity(0.1);
+                              break;
+                            case TransactionType.fuelPurchase:
+                              icon = Icons.local_gas_station_rounded;
+                              iconColor = AppColors.primaryRed;
+                              bgIconColor = AppColors.primaryRed.withOpacity(0.1);
+                              break;
+                            case TransactionType.refund:
+                              icon = Icons.replay_rounded;
+                              iconColor = Colors.blue;
+                              bgIconColor = Colors.blue.withOpacity(0.1);
+                              break;
+                            case TransactionType.adminAdjustment:
+                              icon = Icons.tune_rounded;
+                              iconColor = Colors.orange;
+                              bgIconColor = Colors.orange.withOpacity(0.1);
+                              break;
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: AppCard(
+                              padding: EdgeInsets.zero,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => context.push('/transactions/${item.id}'),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: bgIconColor,
+                                        child: Icon(
+                                          icon,
+                                          color: iconColor,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.description ?? item.type.label,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall
+                                                  ?.copyWith(fontWeight: FontWeight.w700),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              formattedDate,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: AppColors.textSecondary,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '${isIncoming ? '+' : '-'} ${formatCurrencyIdr(item.amount)}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: isIncoming
+                                                      ? AppColors.success
+                                                      : AppColors.textPrimary,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                          ),
+                                          if (item.status != WalletTransactionStatus.success) ...[
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: item.status == WalletTransactionStatus.pending
+                                                    ? Colors.orange.withOpacity(0.1)
+                                                    : AppColors.primaryRed.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                item.status.label,
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: item.status == WalletTransactionStatus.pending
+                                                      ? Colors.orange
+                                                      : AppColors.primaryRed,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                      .toList(),
+                );
+              },
+              loading: () => Column(
+                children: List.generate(
+                  3,
+                  (index) => const Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: LoadingSkeleton(height: 80),
+                  ),
+                ),
               ),
-              loading: () => const LoadingSkeleton(height: 140),
-              error: (_, __) => ErrorState(
+              error: (error, __) => ErrorState(
                 title: 'Gagal memuat transaksi',
-                message: 'Coba lagi dalam beberapa saat.',
-                onRetry: () => ref.invalidate(transactionsProvider),
+                message: error.toString().replaceAll('Exception: ', ''),
+                onRetry: () => ref.invalidate(walletTransactionsProvider),
               ),
             ),
           ]
               .animate(interval: 70.ms)
               .fadeIn(duration: 300.ms)
               .moveY(begin: 8, end: 0),
+          ),
         ),
       ),
     );

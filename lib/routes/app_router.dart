@@ -19,8 +19,11 @@ import '../features/family/presentation/screens/family_list_screen.dart';
 import '../features/notifications/presentation/screens/notifications_screen.dart';
 import '../features/quota/presentation/screens/quota_screen.dart';
 import '../features/wallet/presentation/screens/topup_screen.dart';
+import '../features/wallet/presentation/screens/topup_status_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
+import '../features/wallet/presentation/screens/qris_screen.dart';
 import '../features/transactions/presentation/screens/transaction_history_screen.dart';
+import '../features/transactions/presentation/screens/transaction_detail_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/profile/presentation/screens/profile_detail_screen.dart';
 import '../features/profile/presentation/screens/notification_settings_screen.dart';
@@ -192,6 +195,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: 'topup',
                 pageBuilder: (context, state) =>
                     _fadePage(state, const TopUpScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'status',
+                    pageBuilder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>;
+                      return _fadePage(
+                        state,
+                        TopUpStatusScreen(
+                          topupId: extra['id'] as String,
+                          paymentLinkUrl: extra['payment_link_url'] as String,
+                          amount: extra['amount'] as int,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'qris',
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const QrisScreen()),
               ),
             ],
           ),
@@ -199,6 +223,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/transactions',
             pageBuilder: (context, state) =>
                 _fadePage(state, const TransactionHistoryScreen()),
+            routes: [
+              GoRoute(
+                path: ':id',
+                pageBuilder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return _fadePage(
+                    state,
+                    TransactionDetailScreen(id: id),
+                  );
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/profile',
