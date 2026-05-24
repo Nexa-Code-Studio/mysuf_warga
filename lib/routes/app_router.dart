@@ -22,12 +22,14 @@ import '../features/wallet/presentation/screens/topup_screen.dart';
 import '../features/wallet/presentation/screens/topup_status_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../features/wallet/presentation/screens/qris_screen.dart';
+import '../features/wallet/presentation/screens/transfer_screen.dart';
 import '../features/transactions/presentation/screens/transaction_history_screen.dart';
 import '../features/transactions/presentation/screens/transaction_detail_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/profile/presentation/screens/profile_detail_screen.dart';
 import '../features/profile/presentation/screens/notification_settings_screen.dart';
 import '../features/profile/presentation/screens/help_center_screen.dart';
+import '../features/profile/presentation/screens/security_pin_screen.dart';
 import '../features/risk/presentation/screens/risk_screen.dart';
 import '../shared/models/vehicle.dart';
 
@@ -217,6 +219,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) =>
                     _fadePage(state, const QrisScreen()),
               ),
+              GoRoute(
+                path: 'transfer',
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const TransferScreen()),
+              ),
             ],
           ),
           GoRoute(
@@ -255,6 +262,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: 'help',
                 pageBuilder: (context, state) =>
                     _fadePage(state, const HelpCenterScreen()),
+              ),
+              GoRoute(
+                path: 'pin',
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const SecurityPinScreen()),
               ),
             ],
           ),

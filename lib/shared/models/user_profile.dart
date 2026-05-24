@@ -7,6 +7,7 @@ class UserProfile {
   final int vehiclesCount;
   final int quotaRemaining;
   final int walletBalance;
+  final bool isPinActive;
 
   const UserProfile({
     required this.name,
@@ -17,6 +18,7 @@ class UserProfile {
     required this.vehiclesCount,
     required this.quotaRemaining,
     required this.walletBalance,
+    this.isPinActive = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class UserProfile {
       vehiclesCount: json['vehiclesCount'] as int? ?? 0,
       quotaRemaining: json['quotaRemaining'] as int? ?? 0,
       walletBalance: json['walletBalance'] as int? ?? 0,
+      isPinActive: json['isPinActive'] as bool? ?? false,
     );
   }
 }

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../data/wallet_providers.dart';

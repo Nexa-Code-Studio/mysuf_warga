@@ -13,6 +13,7 @@ import '../../../../shared/providers/mock_providers.dart';
 import '../../domain/buyer_home.dart';
 import '../providers/home_providers.dart';
 import '../../../../shared/models/wallet_transaction.dart';
+import '../../../../core/services/notification_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final bool showVerifyNotice;
@@ -48,6 +49,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final homeData = ref.watch(homeDashboardProvider);
+
+    ref.listen(profileProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        final fcmToken = NotificationService.fcmToken;
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          ref.read(profileRepositoryProvider).updateDeviceToken(fcmToken).catchError((_) {});
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,

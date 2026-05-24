@@ -121,6 +121,22 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             const SectionHeader(title: 'Keamanan'),
             const SizedBox(height: 12),
+            profile.when(
+              data: (data) => _MenuTile(
+                title: 'PIN Keamanan Transaksi',
+                subtitle: data.isPinActive ? 'Aktif - Keamanan transaksi aktif' : 'Belum Aktif - Klik untuk atur PIN',
+                icon: Icons.lock_outline,
+                onTap: () => context.go('/profile/pin'),
+              ),
+              loading: () => const LoadingSkeleton(height: 72),
+              error: (_, __) => _MenuTile(
+                title: 'PIN Keamanan Transaksi',
+                subtitle: 'Pengaturan PIN transaksi',
+                icon: Icons.lock_outline,
+                onTap: () => context.go('/profile/pin'),
+              ),
+            ),
+            const SizedBox(height: 10),
             risk.when(
               data: (data) => _MenuTile(
                 title: 'Status Risiko AI',

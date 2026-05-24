@@ -8,11 +8,14 @@ import '../models/transaction.dart';
 import '../models/user_profile.dart';
 import '../models/vehicle.dart';
 import '../../features/profile/data/profile_repository.dart';
+import '../../features/notifications/data/notifications_repository.dart';
 import '../../features/risk/domain/risk_state.dart';
 
 final mockApiProvider = Provider<MockApi>((ref) => MockApi());
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) => ProfileRepository());
+
+final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) => NotificationsRepository());
 
 final profileProvider = FutureProvider<UserProfile>((ref) async {
   final state = await ref.read(profileRepositoryProvider).fetchProfile();

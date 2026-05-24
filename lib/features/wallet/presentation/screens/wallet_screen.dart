@@ -152,7 +152,7 @@ class WalletScreen extends ConsumerWidget {
                 _WalletAction(
                   label: 'Transfer',
                   icon: Icons.swap_horiz,
-                  onTap: () {},
+                  onTap: () => context.go('/wallet/transfer'),
                 ),
                 const SizedBox(width: 12),
                 _WalletAction(
