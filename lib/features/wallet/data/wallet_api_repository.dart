@@ -177,6 +177,50 @@ class WalletApiRepository {
     });
   }
 
+  Future<Map<String, dynamic>> searchRecipient(String nik) async {
+    return _withAuthorizedAction((accessToken) async {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/wallet/search-recipient',
+        queryParameters: {
+          'nik': nik,
+        },
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      final body = response.data;
+      if (body == null) {
+        throw Exception('Penerima tidak ditemukan.');
+      }
+      return body;
+    });
+  }
+
+  Future<void> transfer({
+    required String recipientNik,
+    required double amount,
+    String? pin,
+  }) async {
+    await _withAuthorizedAction((accessToken) async {
+      await _dio.post(
+        '/wallet/transfer',
+        data: {
+          'recipient_nik': recipientNik,
+          'amount': amount,
+          'pin': pin,
+        },
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+          },
+        ),
+      );
+    });
+  }
+
   String _extractErrorMessage(DioException error) {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {

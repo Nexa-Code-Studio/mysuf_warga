@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "609246109453",
+    "project_id": "mysuf-bd596",
+    "storage_bucket": "mysuf-bd596.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:609246109453:android:666c2693db1cb5488f5a44",
+        "android_client_info": {
+          "package_name": "com.example.mysuf_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlWLiXhvfeP2Uzh3WGZvO01rV-awsbens"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

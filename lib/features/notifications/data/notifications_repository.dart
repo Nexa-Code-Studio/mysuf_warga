@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../../../core/constants/app_constants.dart';
-import '../../../shared/models/user_profile.dart';
+import '../../../shared/models/notification_item.dart';
 import '../../auth/data/auth_secure_storage.dart';
 import '../../auth/domain/auth_session.dart';
-import '../domain/profile_state.dart';
 
-class ProfileRepository {
-  ProfileRepository({
+class NotificationsRepository {
+  NotificationsRepository({
     Dio? dio,
     AuthSecureStorage? secureStorage,
   }) : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
@@ -18,10 +17,10 @@ class ProfileRepository {
   final Dio _dio;
   final AuthSecureStorage _secureStorage;
 
-  Future<ProfileState> fetchProfile() async {
+  Future<List<NotificationItem>> fetchNotifications() async {
     return _withAuthorizedAction((accessToken) async {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/users/me/profile',
+        '/notifications',
         options: Options(
           headers: {
             HttpHeaders.authorizationHeader: 'Bearer $accessToken',
@@ -31,11 +30,46 @@ class ProfileRepository {
 
       final body = response.data;
       if (body == null) {
-        throw Exception('Backend tidak mengembalikan data profil.');
+        throw Exception('Backend tidak mengembalikan data notifikasi.');
       }
 
-      final profile = UserProfile.fromJson(body);
-      return ProfileState(profile: profile);
+      final items = body['items'] as List<dynamic>? ?? [];
+      return items
+          .map((item) => NotificationItem.fromJson(item as Map<String, dynamic>))
+          .toList();
+    });
+  }
+
+  Future<NotificationItem> markAsRead(String id) async {
+    return _withAuthorizedAction((accessToken) async {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/notifications/$id/read',
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+          },
+        ),
+      );
+
+      final body = response.data;
+      if (body == null) {
+        throw Exception('Gagal menandai notifikasi sebagai dibaca.');
+      }
+
+      return NotificationItem.fromJson(body);
+    });
+  }
+
+  Future<void> markAllAsRead() async {
+    await _withAuthorizedAction((accessToken) async {
+      await _dio.post(
+        '/notifications/read-all',
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+          },
+        ),
+      );
     });
   }
 
@@ -84,39 +118,6 @@ class ProfileRepository {
       final refreshedSession = await _refreshSession();
       return action(refreshedSession.accessToken);
     }
-  }
-
-  Future<void> updatePin({required String pin, String? oldPin}) async {
-    await _withAuthorizedAction((accessToken) async {
-      await _dio.post(
-        '/users/me/pin',
-        data: {
-          'pin': pin,
-          'old_pin': oldPin,
-        },
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
-        ),
-      );
-    });
-  }
-
-  Future<void> updateDeviceToken(String token) async {
-    await _withAuthorizedAction((accessToken) async {
-      await _dio.post(
-        '/users/me/device-token',
-        data: {
-          'token': token,
-        },
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
-        ),
-      );
-    });
   }
 
   String _extractErrorMessage(DioException error) {
