@@ -28,7 +28,11 @@ class ProfileDetailScreen extends ConsumerWidget {
                       radius: 26,
                       backgroundColor: const Color(0xFFFFF1F3),
                       child: Text(
-                        data.name.substring(0, 2),
+                        data.name.isNotEmpty
+                            ? (data.name.length >= 2
+                                ? data.name.substring(0, 2).toUpperCase()
+                                : data.name.toUpperCase())
+                            : '',
                         style: const TextStyle(
                           color: AppColors.primaryRed,
                           fontWeight: FontWeight.w700,
@@ -41,7 +45,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            data.name,
+                            _getTwoWords(data.name),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -128,6 +132,15 @@ class ProfileDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  String _getTwoWords(String fullName) {
+    if (fullName.isEmpty) return '';
+    final words = fullName.trim().split(RegExp(r'\s+'));
+    if (words.length <= 2) {
+      return fullName;
+    }
+    return '${words[0]} ${words[1]}';
+  }
 }
 
 class _DetailRow extends StatelessWidget {
@@ -139,8 +152,10 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        SizedBox(
+          width: 130,
           child: Text(
             label,
             style: Theme.of(context)
@@ -150,11 +165,14 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-              value,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+            textAlign: TextAlign.end,
+          ),
         ),
       ],
     );

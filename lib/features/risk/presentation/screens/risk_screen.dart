@@ -45,7 +45,7 @@ class RiskScreen extends ConsumerWidget {
                         Row(
                           children: [
                             Text(
-                              data.score.toString(),
+                              data.score.toStringAsFixed(0),
                               style: Theme.of(context)
                                   .textTheme
                                   .displaySmall
@@ -56,7 +56,7 @@ class RiskScreen extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.12),
+                                color: statusColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
@@ -74,7 +74,9 @@ class RiskScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Skor dihitung dari riwayat transaksi dan validasi data.',
+                          data.statusLevel == RiskLevel.freeze
+                              ? 'Skor di atas 85. Akun disuspend untuk top up dan transaksi BBM.'
+                              : 'Skor mempengaruhi total quota subsidi yang dapat digunakan.',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -146,7 +148,7 @@ class RiskScreen extends ConsumerWidget {
               );
             },
             loading: () => const LoadingSkeleton(height: 200),
-            error: (_, __) => ErrorState(
+            error: (_, _) => ErrorState(
               title: 'Gagal memuat status',
               message: 'Coba muat ulang status risiko.',
               onRetry: () => ref.invalidate(riskProvider),

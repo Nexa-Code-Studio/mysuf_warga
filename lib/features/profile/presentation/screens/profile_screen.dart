@@ -15,6 +15,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
+    final risk = ref.watch(riskProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -31,7 +32,11 @@ class ProfileScreen extends ConsumerWidget {
                       radius: 26,
                       backgroundColor: const Color(0xFFFFF1F3),
                       child: Text(
-                        data.name.substring(0, 2),
+                        data.name.isNotEmpty
+                            ? (data.name.length >= 2
+                                ? data.name.substring(0, 2).toUpperCase()
+                                : data.name.toUpperCase())
+                            : '',
                         style: const TextStyle(
                           color: AppColors.primaryRed,
                           fontWeight: FontWeight.w700,
@@ -44,7 +49,7 @@ class ProfileScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            data.name,
+                            data.name.trim().split(RegExp(r'\s+')).take(2).join(' '),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -66,7 +71,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               loading: () => const LoadingSkeleton(height: 90),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 16),
             profile.when(
@@ -95,18 +100,11 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               loading: () => const LoadingSkeleton(height: 90),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 20),
             const SectionHeader(title: 'Akun & Identitas'),
             const SizedBox(height: 12),
-            _MenuTile(
-              title: 'Verifikasi Identitas',
-              subtitle: 'Lengkapi KTP & selfie untuk verifikasi',
-              icon: Icons.verified_user_outlined,
-              onTap: () => context.go('/verification'),
-            ),
-            const SizedBox(height: 10),
             _MenuTile(
               title: 'Anggota Keluarga',
               subtitle: 'Otomatis dari KK yang sama',
@@ -123,11 +121,20 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             const SectionHeader(title: 'Keamanan'),
             const SizedBox(height: 12),
-            _MenuTile(
-              title: 'Status Risiko AI',
-              subtitle: 'Skor 72 - Dalam Review',
-              icon: Icons.shield_outlined,
-              onTap: () => context.go('/home/risk'),
+            risk.when(
+              data: (data) => _MenuTile(
+                title: 'Status Risiko AI',
+                subtitle: 'Skor ${data.score.toStringAsFixed(0)} - ${data.statusLabel}',
+                icon: Icons.shield_outlined,
+                onTap: () => context.go('/home/risk'),
+              ),
+              loading: () => const LoadingSkeleton(height: 72),
+              error: (_, _) => _MenuTile(
+                title: 'Status Risiko AI',
+                subtitle: 'Data risiko belum tersedia',
+                icon: Icons.shield_outlined,
+                onTap: () => context.go('/home/risk'),
+              ),
             ),
             const SizedBox(height: 10),
             _MenuTile(

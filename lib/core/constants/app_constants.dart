@@ -11,4 +11,7 @@ class AppConstants {
 
   static const int maxVehiclesPerFamily = 2;
   static const int maxFamilyMembers = 4;
+  
+  // Shared key for symmetric XOR obfuscation of E-KTP NIK in QR codes
+  static const String qrisSecretKey = 'YTAU!@*@!^18728yLAHD{:{{';
 }

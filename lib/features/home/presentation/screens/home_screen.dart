@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/models/quota.dart';
-import '../../../../shared/providers/mock_providers.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
+import '../../../../shared/providers/mock_providers.dart';
+import '../../domain/buyer_home.dart';
+import '../providers/home_providers.dart';
+import '../../../../shared/models/wallet_transaction.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final bool showVerifyNotice;
@@ -44,8 +47,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
-    final quota = ref.watch(quotaProvider);
-    final isVerified = false;
+    final homeData = ref.watch(homeDashboardProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -53,101 +55,210 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(profileProvider);
-            ref.invalidate(quotaProvider);
+            ref.invalidate(homeDashboardProvider);
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            children: [
-              _Header(profile: profile),
-              const SizedBox(height: 16),
-              if (!isVerified) ...[
-                _VerifyInlineCard(
-                  onVerify: () => context.go('/verification'),
-                ),
+          child: homeData.when(
+            data: (home) => ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: [
+                _Header(profile: profile, home: home),
                 const SizedBox(height: 16),
-              ],
-              quota.when(
-                data: (data) => _QuotaCard(quota: data),
-                loading: () => const LoadingSkeleton(height: 170),
-                error: (_, __) => ErrorState(
-                  title: 'Gagal memuat kuota',
-                  message: 'Tarik untuk memuat ulang data kuota.',
-                  onRetry: () => ref.invalidate(quotaProvider),
+                if (home.vehicleVerification.showVerifyVehicleCta) ...[
+                  _VerifyInlineCard(
+                    ctaRoute: home.vehicleVerification.ctaRoute,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                _QuotaCard(quota: home.personalQuota, verificationStatus: home.riskStatus.verificationStatus),
+                const SizedBox(height: 24),
+                const SectionHeader(title: 'Aksi Cepat'),
+                const SizedBox(height: 12),
+                const _QuickActions(),
+                const SizedBox(height: 24),
+                SectionHeader(
+                  title: 'SPBU Terdekat',
+                  actionLabel: 'Lihat Semua',
+                  onAction: () => context.go('/home/spbu'),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const SectionHeader(title: 'Aksi Cepat'),
-              const SizedBox(height: 12),
-              _QuickActions(),
-              const SizedBox(height: 24),
-              SectionHeader(
-                title: 'SPBU Terdekat',
-                actionLabel: 'Lihat Semua',
-                onAction: () => context.go('/home/spbu'),
-              ),
-              const SizedBox(height: 12),
-              const _StationCard(
-                name: 'SPBU 31.001 Sudirman',
-                distance: '0.8 km dari lokasi Anda',
-              ),
-              const SizedBox(height: 10),
-              const _StationCard(
-                name: 'SPBU 31.002 Gatot Subroto',
-                distance: '1.4 km dari lokasi Anda',
-              ),
-              const SizedBox(height: 24),
-              SectionHeader(
-                title: 'Transaksi Terkini',
-                actionLabel: 'Semua',
-                onAction: () => context.go('/transactions'),
-              ),
-              const SizedBox(height: 12),
-              const _RecentTransactionCard(
-                title: 'Pertalite - SPBU 31.001',
-                subtitle: 'Hari ini, 08:24',
-                amount: '- Rp 150.000',
-                amountColor: AppColors.primaryRed,
-              ),
-              const SizedBox(height: 10),
-              const _RecentTransactionCard(
-                title: 'Pertamax - SPBU 31.002',
-                subtitle: 'Kemarin, 19:05',
-                amount: '- Rp 280.000',
-                amountColor: AppColors.primaryRed,
-              ),
-              const SizedBox(height: 10),
-              const _RecentTransactionCard(
-                title: 'Top Up Dompet',
-                subtitle: 'Kemarin, 12:45',
-                amount: '+ Rp 500.000',
-                amountColor: AppColors.success,
-              ),
-              const SizedBox(height: 24),
-              const SectionHeader(
-                title: 'Status Risiko',
-              ),
-              const SizedBox(height: 12),
-              const _RiskCard(),
-            ]
-                .animate(interval: 70.ms)
-                .fadeIn(duration: 300.ms)
-                .moveY(begin: 8, end: 0),
+                const SizedBox(height: 12),
+                if (!home.nearbyGasStations.locationAvailable)
+                  AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.softGray,
+                            child: const Icon(Icons.location_off, color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              home.nearbyGasStations.message ??
+                                  'Lokasi Anda tidak ditemukan, tolong nyalakan GPS.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (home.nearbyGasStations.items.isEmpty)
+                  AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: Text(
+                          'Tidak ada SPBU terdekat yang ditemukan.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ...home.nearbyGasStations.items.map((station) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _StationCard(
+                          name: station.name,
+                          distance: '${station.distanceKm.toStringAsFixed(1)} km dari lokasi Anda',
+                        ),
+                      )),
+                const SizedBox(height: 24),
+                SectionHeader(
+                  title: 'Transaksi Terkini',
+                  actionLabel: 'Semua',
+                  onAction: () => context.go('/transactions'),
+                ),
+                const SizedBox(height: 12),
+                if (home.recentTransactions.isEmpty)
+                  AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Text(
+                          'Belum ada transaksi.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ...home.recentTransactions.map((tx) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _RecentTransactionCard(
+                          title: tx.title,
+                          subtitle: tx.subtitle,
+                          amount: tx.transactionFlow == TransactionFlow.inflow
+                              ? '+ Rp ${_formatAmount(tx.amount)}'
+                              : '- Rp ${_formatAmount(tx.amount)}',
+                          amountColor: tx.transactionFlow == TransactionFlow.inflow
+                              ? AppColors.success
+                              : AppColors.primaryRed,
+                        ),
+                      )),
+                const SizedBox(height: 24),
+                const SectionHeader(
+                  title: 'Status Risiko',
+                ),
+                const SizedBox(height: 12),
+                _RiskCard(risk: home.riskStatus),
+              ]
+                  .animate(interval: 70.ms)
+                  .fadeIn(duration: 300.ms)
+                  .moveY(begin: 8, end: 0),
+            ),
+            loading: () => ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              children: const [
+                LoadingSkeleton(height: 120),
+                SizedBox(height: 16),
+                LoadingSkeleton(height: 170),
+                SizedBox(height: 24),
+                SectionHeader(title: 'Aksi Cepat'),
+                SizedBox(height: 12),
+                LoadingSkeleton(height: 96),
+                SizedBox(height: 24),
+                SectionHeader(title: 'SPBU Terdekat'),
+                SizedBox(height: 12),
+                LoadingSkeleton(height: 80),
+                SizedBox(height: 10),
+                LoadingSkeleton(height: 80),
+              ],
+            ),
+            error: (err, _) => ErrorState(
+              title: 'Gagal memuat dashboard',
+              message: err.toString(),
+              onRetry: () => ref.invalidate(homeDashboardProvider),
+            ),
           ),
         ),
       ),
     );
   }
+
+  String _formatAmount(double amount) {
+    return amount.toInt().toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+  }
 }
 
 class _Header extends StatelessWidget {
   final AsyncValue profile;
+  final BuyerHome home;
 
-  const _Header({required this.profile});
+  const _Header({required this.profile, required this.home});
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 0 && hour < 11) {
+      return 'Selamat Pagi';
+    } else if (hour >= 11 && hour < 15) {
+      return 'Selamat Siang';
+    } else if (hour >= 15 && hour < 18) {
+      return 'Selamat Sore';
+    } else {
+      return 'Selamat Malam';
+    }
+  }
+
+  String _getTwoWords(String fullName) {
+    if (fullName.isEmpty) return '';
+    final words = fullName.trim().split(RegExp(r'\s+'));
+    if (words.length <= 2) {
+      return fullName;
+    }
+    return '${words[0]} ${words[1]}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return profile.when(
       data: (data) {
+        final verificationStatus = home.riskStatus.verificationStatus.toUpperCase();
+        
+        String statusLabel = 'Perlu Verifikasi';
+        Color statusColor = AppColors.warning;
+        
+        if (verificationStatus == 'VERIFIED') {
+          statusLabel = 'Terverifikasi';
+          statusColor = AppColors.success;
+        } else if (verificationStatus == 'REJECTED') {
+          statusLabel = 'Ditolak';
+          statusColor = AppColors.danger;
+        }
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -156,7 +267,7 @@ class _Header extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Selamat Pagi',
+                    _getGreeting(),
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -164,15 +275,15 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    data.name,
+                    _getTwoWords(data.name),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                   const SizedBox(height: 12),
-                  const StatusPill(
-                    label: 'Perlu Verifikasi',
-                    color: AppColors.warning,
+                  StatusPill(
+                    label: statusLabel,
+                    color: statusColor,
                     backgroundColor: AppColors.softGray,
                   ),
                 ],
@@ -192,15 +303,15 @@ class _Header extends StatelessWidget {
         );
       },
       loading: () => const LoadingSkeleton(height: 120),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }
 
 class _VerifyInlineCard extends StatelessWidget {
-  final VoidCallback onVerify;
+  final String ctaRoute;
 
-  const _VerifyInlineCard({required this.onVerify});
+  const _VerifyInlineCard({required this.ctaRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +338,7 @@ class _VerifyInlineCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: onVerify,
+              onPressed: () => context.go(ctaRoute),
               child: const Text('Verifikasi Sekarang'),
             ),
           ),
@@ -302,12 +413,15 @@ void _showVerifyPopup(BuildContext context) {
 }
 
 class _QuotaCard extends StatelessWidget {
-  final Quota quota;
+  final PersonalQuotaHome quota;
+  final String verificationStatus;
 
-  const _QuotaCard({required this.quota});
+  const _QuotaCard({required this.quota, required this.verificationStatus});
 
   @override
   Widget build(BuildContext context) {
+    final isVerified = verificationStatus.toUpperCase() == 'VERIFIED';
+
     return AppCard(
       padding: EdgeInsets.zero,
       color: AppColors.primaryRed,
@@ -322,7 +436,7 @@ class _QuotaCard extends StatelessWidget {
               top: -40,
               child: _PatternCircle(
                 size: 140,
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
             Positioned(
@@ -330,7 +444,7 @@ class _QuotaCard extends StatelessWidget {
               bottom: -60,
               child: _PatternCircle(
                 size: 160,
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
               ),
             ),
             Positioned(
@@ -338,7 +452,7 @@ class _QuotaCard extends StatelessWidget {
               bottom: 40,
               child: _PatternCircle(
                 size: 90,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
             Padding(
@@ -356,23 +470,25 @@ class _QuotaCard extends StatelessWidget {
                             ?.copyWith(color: Colors.white),
                       ),
                       const Spacer(),
-                      const Icon(Icons.lock_outline, color: Colors.white70),
+                      Icon(
+                        isVerified ? Icons.chevron_right : Icons.lock_outline,
+                        color: Colors.white70,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '--',
-                    style: Theme.of(context)
-                        .textTheme
-                        .displaySmall
-                        ?.copyWith(
+                    isVerified ? '${quota.remainingLiters.toStringAsFixed(0)} L' : '--',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Lengkapi verifikasi untuk melihat kuota subsidi Anda.',
+                    isVerified
+                        ? 'Sisa kuota dari total ${quota.quotaLiters.toStringAsFixed(0)} Liter bulan ini.'
+                        : 'Lengkapi verifikasi untuk melihat kuota subsidi Anda.',
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -506,18 +622,31 @@ class _StationCard extends StatelessWidget {
 }
 
 class _RiskCard extends StatelessWidget {
-  const _RiskCard();
+  final RiskStatusHome risk;
+
+  const _RiskCard({required this.risk});
 
   @override
   Widget build(BuildContext context) {
+    final verificationStatus = risk.verificationStatus.toUpperCase();
+    final isVerified = verificationStatus == 'VERIFIED';
+    
+    final statusColor = !isVerified
+        ? AppColors.warning
+        : risk.riskScore >= 75
+            ? AppColors.danger
+            : risk.riskScore >= 50
+                ? AppColors.warning
+                : AppColors.success;
+
     return AppCard(
       onTap: () => context.go('/home/risk'),
       child: Row(
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: const Color(0xFFFFF5E5),
-            child: Icon(Icons.shield_outlined, color: AppColors.warning),
+            backgroundColor: statusColor.withValues(alpha: 0.12),
+            child: Icon(Icons.shield_outlined, color: statusColor),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -525,7 +654,9 @@ class _RiskCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Skor Risiko 72',
+                  isVerified
+                      ? 'Skor Risiko ${risk.riskScore.toStringAsFixed(0)}'
+                      : 'Skor Risiko --',
                   style: Theme.of(context)
                       .textTheme
                       .titleSmall
@@ -533,7 +664,13 @@ class _RiskCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Status dalam review, lengkapi verifikasi.',
+                  !isVerified
+                      ? 'Lengkapi verifikasi untuk melihat tingkat risiko akun Anda.'
+                      : risk.riskScore >= 75
+                          ? 'Akun dalam pemantauan ketat untuk transaksi subsidi.'
+                          : risk.riskScore >= 50
+                              ? 'Status sedang di-review, kuota dikurangi proporsional.'
+                              : 'Status aman, kuota subsidi berjalan normal.',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall

@@ -1,7 +1,7 @@
 enum RiskLevel { safe, review, freeze }
 
 class RiskState {
-  final int score;
+  final double score;
   final String statusLabel;
   final RiskLevel statusLevel;
   final List<String> notes;

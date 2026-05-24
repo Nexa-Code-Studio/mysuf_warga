@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../data/wallet_providers.dart';
 
-class TopUpScreen extends StatefulWidget {
+class TopUpScreen extends ConsumerStatefulWidget {
   const TopUpScreen({super.key});
 
   @override
-  State<TopUpScreen> createState() => _TopUpScreenState();
+  ConsumerState<TopUpScreen> createState() => _TopUpScreenState();
 }
 
-class _TopUpScreenState extends State<TopUpScreen> {
+class _TopUpScreenState extends ConsumerState<TopUpScreen> {
   final TextEditingController _amountController = TextEditingController();
   final List<int> _presetAmounts = [50000, 100000, 200000, 500000];
-  String _selectedMethod = 'Virtual Account BNI';
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -31,6 +34,71 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
   void _applyPreset(int amount) {
     _amountController.text = _formatAmount(amount);
+  }
+
+  int _parseAmount() {
+    final text = _amountController.text.replaceAll('.', '').trim();
+    return int.tryParse(text) ?? 0;
+  }
+
+  Future<void> _handlePayment() async {
+    final amount = _parseAmount();
+    if (amount < 10000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Minimal nominal top up adalah Rp 10.000'),
+          backgroundColor: AppColors.primaryRed,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ref
+          .read(walletApiRepositoryProvider)
+          .createTopUpSession(amount.toDouble());
+
+      final paymentLinkUrl = result['payment_link_url'] as String?;
+      final topupId = result['id'] as String?;
+
+      if (paymentLinkUrl == null || topupId == null) {
+        throw Exception('Response top up dari server tidak valid.');
+      }
+
+      final uri = Uri.parse(paymentLinkUrl);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        throw Exception('Gagal membuka halaman pembayaran.');
+      }
+
+      if (mounted) {
+        context.pushReplacement(
+          '/wallet/topup/status',
+          extra: {
+            'id': topupId,
+            'payment_link_url': paymentLinkUrl,
+            'amount': amount,
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Gagal membuat session pembayaran: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
+            backgroundColor: AppColors.primaryRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -60,6 +128,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                       controller: _amountController,
                       keyboardType: TextInputType.number,
                       onChanged: (_) => setState(() {}),
+                      enabled: !_isLoading,
                       decoration: InputDecoration(
                         hintText: 'Masukkan nominal',
                         prefixIcon: Padding(
@@ -86,7 +155,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
                               label: _formatAmount(amount),
                               isSelected:
                                   _amountController.text == _formatAmount(amount),
-                              onTap: () => setState(() => _applyPreset(amount)),
+                              onTap: _isLoading
+                                  ? () {}
+                                  : () => setState(() => _applyPreset(amount)),
                             ),
                           )
                           .toList(),
@@ -108,18 +179,10 @@ class _TopUpScreenState extends State<TopUpScreen> {
                     ),
                     const SizedBox(height: 12),
                     _MethodTile(
-                      title: 'Virtual Account BNI',
-                      subtitle: 'Biaya admin Rp 1.000',
-                      isSelected: _selectedMethod == 'Virtual Account BNI',
-                      onTap: () => setState(
-                          () => _selectedMethod = 'Virtual Account BNI'),
-                    ),
-                    const SizedBox(height: 10),
-                    _MethodTile(
-                      title: 'QRIS',
-                      subtitle: 'Dukungan semua e-wallet',
-                      isSelected: _selectedMethod == 'QRIS',
-                      onTap: () => setState(() => _selectedMethod = 'QRIS'),
+                      title: 'Xendit Payment Session',
+                      subtitle: 'Dukungan QRIS, VA, E-Wallet & Retail',
+                      isSelected: true,
+                      onTap: () {},
                     ),
                   ],
                 ),
@@ -128,7 +191,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.pop(),
+                  onPressed: _isLoading ? null : _handlePayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryRed,
                     foregroundColor: Colors.white,
@@ -137,7 +200,17 @@ class _TopUpScreenState extends State<TopUpScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text('Lanjutkan Pembayaran'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Lanjutkan Pembayaran'),
                 ),
               ),
             ],
@@ -203,10 +276,10 @@ class _MethodTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFF1F3) : AppColors.softGray,
+          color: const Color(0xFFFFF1F3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primaryRed : Colors.transparent,
+            color: AppColors.primaryRed,
           ),
         ),
         child: Row(
@@ -236,10 +309,8 @@ class _MethodTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
+            const Icon(
+              Icons.radio_button_checked,
               color: AppColors.primaryRed,
             ),
           ],
