@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -49,12 +50,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final homeData = ref.watch(homeDashboardProvider);
+    final locationState = ref.watch(currentLocationProvider);
 
     ref.listen(profileProvider, (previous, next) {
       if (next.hasValue && next.value != null) {
         final fcmToken = NotificationService.fcmToken;
         if (fcmToken != null && fcmToken.isNotEmpty) {
-          ref.read(profileRepositoryProvider).updateDeviceToken(fcmToken).catchError((_) {});
+          ref
+              .read(profileRepositoryProvider)
+              .updateDeviceToken(fcmToken)
+              .catchError((_) {});
         }
       }
     });
@@ -65,7 +70,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(profileProvider);
+            ref.invalidate(currentLocationProvider);
             ref.invalidate(homeDashboardProvider);
+            ref.invalidate(nearbyGasStationsProvider);
           },
           child: homeData.when(
             data: (home) => ListView(
@@ -79,7 +86,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                _QuotaCard(quota: home.personalQuota, verificationStatus: home.riskStatus.verificationStatus),
+                _QuotaCard(
+                  quota: home.personalQuota,
+                  verificationStatus: home.riskStatus.verificationStatus,
+                ),
                 const SizedBox(height: 24),
                 const SectionHeader(title: 'Aksi Cepat'),
                 const SizedBox(height: 12),
@@ -92,30 +102,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (!home.nearbyGasStations.locationAvailable)
-                  AppCard(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppColors.softGray,
-                            child: const Icon(Icons.location_off, color: AppColors.textSecondary),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              home.nearbyGasStations.message ??
-                                  'Lokasi Anda tidak ditemukan, tolong nyalakan GPS.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: AppColors.textSecondary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _LocationUnavailableCard(
+                    message:
+                        locationState.asData?.value.message ??
+                        home.nearbyGasStations.message ??
+                        'Lokasi Anda tidak ditemukan, tolong nyalakan GPS.',
+                    canRetry: locationState.asData?.value.canRetry ?? true,
+                    canOpenAppSettings:
+                        locationState.asData?.value.canOpenAppSettings ?? false,
+                    canOpenLocationSettings:
+                        locationState.asData?.value.canOpenLocationSettings ??
+                        false,
+                    onRetry: () {
+                      ref.invalidate(currentLocationProvider);
+                      ref.invalidate(homeDashboardProvider);
+                      ref.invalidate(nearbyGasStationsProvider);
+                    },
                   )
                 else if (home.nearbyGasStations.items.isEmpty)
                   AppCard(
@@ -124,22 +126,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Center(
                         child: Text(
                           'Tidak ada SPBU terdekat yang ditemukan.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
                   )
                 else
-                  ...home.nearbyGasStations.items.map((station) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _StationCard(
-                          name: station.name,
-                          distance: '${station.distanceKm.toStringAsFixed(1)} km dari lokasi Anda',
-                        ),
-                      )),
+                  ...home.nearbyGasStations.items.map(
+                    (station) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _StationCard(
+                        name: station.name,
+                        distance:
+                            '${station.distanceKm.toStringAsFixed(1)} km dari lokasi Anda',
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 24),
                 SectionHeader(
                   title: 'Transaksi Terkini',
@@ -154,38 +157,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Center(
                         child: Text(
                           'Belum ada transaksi.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
                   )
                 else
-                  ...home.recentTransactions.map((tx) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _RecentTransactionCard(
-                          title: tx.title,
-                          subtitle: tx.subtitle,
-                          amount: tx.transactionFlow == TransactionFlow.inflow
-                              ? '+ Rp ${_formatAmount(tx.amount)}'
-                              : '- Rp ${_formatAmount(tx.amount)}',
-                          amountColor: tx.transactionFlow == TransactionFlow.inflow
-                              ? AppColors.success
-                              : AppColors.primaryRed,
-                        ),
-                      )),
+                  ...home.recentTransactions.map(
+                    (tx) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _RecentTransactionCard(
+                        title: tx.title,
+                        subtitle: tx.subtitle,
+                        amount: tx.transactionFlow == TransactionFlow.inflow
+                            ? '+ Rp ${_formatAmount(tx.amount)}'
+                            : '- Rp ${_formatAmount(tx.amount)}',
+                        amountColor:
+                            tx.transactionFlow == TransactionFlow.inflow
+                            ? AppColors.success
+                            : AppColors.primaryRed,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 24),
-                const SectionHeader(
-                  title: 'Status Risiko',
-                ),
+                const SectionHeader(title: 'Status Risiko'),
                 const SizedBox(height: 12),
                 _RiskCard(risk: home.riskStatus),
-              ]
-                  .animate(interval: 70.ms)
-                  .fadeIn(duration: 300.ms)
-                  .moveY(begin: 8, end: 0),
+              ].animate(interval: 70.ms).fadeIn(duration: 300.ms).moveY(begin: 8, end: 0),
             ),
             loading: () => ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -208,7 +207,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             error: (err, _) => ErrorState(
               title: 'Gagal memuat dashboard',
               message: err.toString(),
-              onRetry: () => ref.invalidate(homeDashboardProvider),
+              onRetry: () {
+                ref.invalidate(currentLocationProvider);
+                ref.invalidate(homeDashboardProvider);
+                ref.invalidate(nearbyGasStationsProvider);
+              },
             ),
           ),
         ),
@@ -218,9 +221,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _formatAmount(double amount) {
     return amount.toInt().toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+  }
+}
+
+class _LocationUnavailableCard extends StatelessWidget {
+  final String message;
+  final bool canRetry;
+  final bool canOpenAppSettings;
+  final bool canOpenLocationSettings;
+  final VoidCallback onRetry;
+
+  const _LocationUnavailableCard({
+    required this.message,
+    required this.canRetry,
+    required this.canOpenAppSettings,
+    required this.canOpenLocationSettings,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.softGray,
+                  child: const Icon(
+                    Icons.location_off,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (canRetry || canOpenAppSettings || canOpenLocationSettings) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (canRetry)
+                    OutlinedButton(
+                      onPressed: onRetry,
+                      child: const Text('Coba Lagi'),
+                    ),
+                  if (canOpenLocationSettings)
+                    OutlinedButton(
+                      onPressed: Geolocator.openLocationSettings,
+                      child: const Text('Buka GPS'),
+                    ),
+                  if (canOpenAppSettings)
+                    OutlinedButton(
+                      onPressed: Geolocator.openAppSettings,
+                      child: const Text('Buka Pengaturan'),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -256,11 +334,12 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return profile.when(
       data: (data) {
-        final verificationStatus = home.riskStatus.verificationStatus.toUpperCase();
-        
+        final verificationStatus = home.riskStatus.verificationStatus
+            .toUpperCase();
+
         String statusLabel = 'Perlu Verifikasi';
         Color statusColor = AppColors.warning;
-        
+
         if (verificationStatus == 'VERIFIED') {
           statusLabel = 'Terverifikasi';
           statusColor = AppColors.success;
@@ -278,17 +357,16 @@ class _Header extends StatelessWidget {
                 children: [
                   Text(
                     _getGreeting(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.textSecondary),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     _getTwoWords(data.name),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   StatusPill(
@@ -305,8 +383,10 @@ class _Header extends StatelessWidget {
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.softGray,
-                child: const Icon(Icons.notifications_none,
-                    color: AppColors.textPrimary),
+                child: const Icon(
+                  Icons.notifications_none,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -336,10 +416,9 @@ class _VerifyInlineCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Lengkapi data kendaraan, pajak, dan verifikasi agar kuota subsidi aktif.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -380,8 +459,8 @@ void _showVerifyPopup(BuildContext context) {
                     child: Text(
                       'Registrasi berhasil',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -394,10 +473,9 @@ void _showVerifyPopup(BuildContext context) {
               const SizedBox(height: 8),
               Text(
                 'Akun Anda berhasil dibuat dan tervalidasi oleh sistem. Lanjutkan verifikasi untuk melihat kuota subsidi.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -423,7 +501,7 @@ void _showVerifyPopup(BuildContext context) {
 }
 
 class _QuotaCard extends StatelessWidget {
-  final PersonalQuotaHome quota;
+  final PersonalQuotaHome? quota;
   final String verificationStatus;
 
   const _QuotaCard({required this.quota, required this.verificationStatus});
@@ -431,6 +509,7 @@ class _QuotaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isVerified = verificationStatus.toUpperCase() == 'VERIFIED';
+    final hasQuota = quota != null;
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -474,10 +553,9 @@ class _QuotaCard extends StatelessWidget {
                     children: [
                       Text(
                         'Sisa Kuota Bulanan',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(color: Colors.white),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleSmall?.copyWith(color: Colors.white),
                       ),
                       const Spacer(),
                       Icon(
@@ -488,21 +566,24 @@ class _QuotaCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    isVerified ? '${quota.remainingLiters.toStringAsFixed(0)} L' : '--',
+                    isVerified && hasQuota
+                        ? '${quota!.remainingLiters.toStringAsFixed(0)} L'
+                        : '--',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isVerified
-                        ? 'Sisa kuota dari total ${quota.quotaLiters.toStringAsFixed(0)} Liter bulan ini.'
-                        : 'Lengkapi verifikasi untuk melihat kuota subsidi Anda.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.white70),
+                    !isVerified
+                        ? 'Lengkapi verifikasi untuk melihat kuota subsidi Anda.'
+                        : hasQuota
+                        ? 'Sisa kuota dari total ${quota!.quotaLiters.toStringAsFixed(0)} Liter bulan ini.'
+                        : 'Kuota subsidi tidak tersedia karena KK Anda tidak memenuhi syarat saat ini.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                   ),
                 ],
               ),
@@ -585,8 +666,10 @@ class _StationCard extends StatelessWidget {
               color: AppColors.softGray,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.location_on_outlined,
-                color: AppColors.primaryRed),
+            child: const Icon(
+              Icons.location_on_outlined,
+              color: AppColors.primaryRed,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -595,18 +678,16 @@ class _StationCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   distance,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -620,9 +701,9 @@ class _StationCard extends StatelessWidget {
             child: Text(
               'Buka',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.success,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -640,14 +721,14 @@ class _RiskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final verificationStatus = risk.verificationStatus.toUpperCase();
     final isVerified = verificationStatus == 'VERIFIED';
-    
+
     final statusColor = !isVerified
         ? AppColors.warning
         : risk.riskScore >= 75
-            ? AppColors.danger
-            : risk.riskScore >= 50
-                ? AppColors.warning
-                : AppColors.success;
+        ? AppColors.danger
+        : risk.riskScore >= 50
+        ? AppColors.warning
+        : AppColors.success;
 
     return AppCard(
       onTap: () => context.go('/home/risk'),
@@ -667,24 +748,22 @@ class _RiskCard extends StatelessWidget {
                   isVerified
                       ? 'Skor Risiko ${risk.riskScore.toStringAsFixed(0)}'
                       : 'Skor Risiko --',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   !isVerified
                       ? 'Lengkapi verifikasi untuk melihat tingkat risiko akun Anda.'
                       : risk.riskScore >= 75
-                          ? 'Akun dalam pemantauan ketat untuk transaksi subsidi.'
-                          : risk.riskScore >= 50
-                              ? 'Status sedang di-review, kuota dikurangi proporsional.'
-                              : 'Status aman, kuota subsidi berjalan normal.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                      ? 'Akun dalam pemantauan ketat untuk transaksi subsidi.'
+                      : risk.riskScore >= 50
+                      ? 'Status sedang di-review, kuota dikurangi proporsional.'
+                      : 'Status aman, kuota subsidi berjalan normal.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -720,8 +799,7 @@ class _RecentTransactionCard extends StatelessWidget {
               color: AppColors.softGray,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.receipt_long,
-                color: AppColors.primaryRed),
+            child: const Icon(Icons.receipt_long, color: AppColors.primaryRed),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -730,18 +808,16 @@ class _RecentTransactionCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -749,9 +825,9 @@ class _RecentTransactionCard extends StatelessWidget {
           Text(
             amount,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: amountColor,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: amountColor,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

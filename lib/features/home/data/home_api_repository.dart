@@ -8,11 +8,9 @@ import '../domain/buyer_home.dart';
 import '../../auth/data/auth_secure_storage.dart';
 
 class HomeApiRepository {
-  HomeApiRepository({
-    Dio? dio,
-    AuthSecureStorage? secureStorage,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
-       _secureStorage = secureStorage ?? AuthSecureStorage();
+  HomeApiRepository({Dio? dio, AuthSecureStorage? secureStorage})
+    : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
+      _secureStorage = secureStorage ?? AuthSecureStorage();
 
   final Dio _dio;
   final AuthSecureStorage _secureStorage;
@@ -26,10 +24,7 @@ class HomeApiRepository {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/refresh',
-        data: {
-          'refresh_token': refreshToken,
-          'client_type': 'BUYER_ANDROID',
-        },
+        data: {'refresh_token': refreshToken, 'client_type': 'BUYER_ANDROID'},
       );
 
       final body = response.data;
@@ -80,9 +75,7 @@ class HomeApiRepository {
         '/users/me/home',
         queryParameters: queryParams,
         options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
         ),
       );
 
@@ -92,6 +85,33 @@ class HomeApiRepository {
       }
 
       return BuyerHome.fromJson(body);
+    });
+  }
+
+  Future<NearbyGasStationsHome> fetchNearbyGasStations({
+    required double latitude,
+    required double longitude,
+    int limit = 20,
+  }) async {
+    return _withAuthorizedAction((accessToken) async {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/users/me/nearby-gas-stations',
+        queryParameters: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'limit': limit,
+        },
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
+        ),
+      );
+
+      final body = response.data;
+      if (body == null) {
+        throw Exception('Backend tidak mengembalikan data SPBU terdekat.');
+      }
+
+      return NearbyGasStationsHome.fromJson(body);
     });
   }
 

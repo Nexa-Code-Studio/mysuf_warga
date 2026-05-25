@@ -12,6 +12,38 @@ import '../../../../shared/widgets/section_header.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _confirmUpdateNfc(BuildContext context) async {
+    final shouldContinue = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Update NFC'),
+          content: const Text(
+            'NFC E-KTP Anda akan diperbarui. Data NFC pada kendaraan dan pengajuan kendaraan yang terkait juga akan ikut diganti.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Lanjutkan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldContinue == true && context.mounted) {
+      context.go('/profile/update-nfc');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
@@ -34,8 +66,8 @@ class ProfileScreen extends ConsumerWidget {
                       child: Text(
                         data.name.isNotEmpty
                             ? (data.name.length >= 2
-                                ? data.name.substring(0, 2).toUpperCase()
-                                : data.name.toUpperCase())
+                                  ? data.name.substring(0, 2).toUpperCase()
+                                  : data.name.toUpperCase())
                             : '',
                         style: const TextStyle(
                           color: AppColors.primaryRed,
@@ -49,18 +81,18 @@ class ProfileScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            data.name.trim().split(RegExp(r'\s+')).take(2).join(' '),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            data.name
+                                .trim()
+                                .split(RegExp(r'\s+'))
+                                .take(2)
+                                .join(' '),
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'NIK: ${data.nikMasked}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.textSecondary),
                           ),
                         ],
@@ -124,7 +156,9 @@ class ProfileScreen extends ConsumerWidget {
             profile.when(
               data: (data) => _MenuTile(
                 title: 'PIN Keamanan Transaksi',
-                subtitle: data.isPinActive ? 'Aktif - Keamanan transaksi aktif' : 'Belum Aktif - Klik untuk atur PIN',
+                subtitle: data.isPinActive
+                    ? 'Aktif - Keamanan transaksi aktif'
+                    : 'Belum Aktif - Klik untuk atur PIN',
                 icon: Icons.lock_outline,
                 onTap: () => context.go('/profile/pin'),
               ),
@@ -137,10 +171,18 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 10),
+            _MenuTile(
+              title: 'Update NFC',
+              subtitle: 'Perbarui NFC E-KTP untuk transaksi',
+              icon: Icons.nfc_rounded,
+              onTap: () => _confirmUpdateNfc(context),
+            ),
+            const SizedBox(height: 10),
             risk.when(
               data: (data) => _MenuTile(
                 title: 'Status Risiko AI',
-                subtitle: 'Skor ${data.score.toStringAsFixed(0)} - ${data.statusLabel}',
+                subtitle:
+                    'Skor ${data.score.toStringAsFixed(0)} - ${data.statusLabel}',
                 icon: Icons.shield_outlined,
                 onTap: () => context.go('/home/risk'),
               ),
@@ -215,17 +257,16 @@ class _MetricCard extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.primaryRed,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.primaryRed,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -267,18 +308,16 @@ class _MenuTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),

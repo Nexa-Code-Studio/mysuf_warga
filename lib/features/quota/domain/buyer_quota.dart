@@ -1,5 +1,5 @@
 class BuyerQuotaResponse {
-  final PersonalQuotaDetail personalQuota;
+  final PersonalQuotaDetail? personalQuota;
   final List<SubsidizedFuel> subsidizedFuels;
   final List<VehicleQuotaDetail> vehicles;
 
@@ -11,7 +11,11 @@ class BuyerQuotaResponse {
 
   factory BuyerQuotaResponse.fromJson(Map<String, dynamic> json) {
     return BuyerQuotaResponse(
-      personalQuota: PersonalQuotaDetail.fromJson(json['personal_quota']),
+      personalQuota: json['personal_quota'] is Map<String, dynamic>
+          ? PersonalQuotaDetail.fromJson(
+              json['personal_quota'] as Map<String, dynamic>,
+            )
+          : null,
       subsidizedFuels: (json['subsidized_fuels'] as List)
           .map((e) => SubsidizedFuel.fromJson(e))
           .toList(),
@@ -47,12 +51,23 @@ class PersonalQuotaDetail {
     );
   }
 
-  double get progress => quotaLiters == 0 ? 0.0 : (quotaLiters - remainingLiters) / quotaLiters;
+  double get progress =>
+      quotaLiters == 0 ? 0.0 : (quotaLiters - remainingLiters) / quotaLiters;
 
   String get periodLabel {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     if (month >= 1 && month <= 12) {
       return '${months[month - 1]} $year';
