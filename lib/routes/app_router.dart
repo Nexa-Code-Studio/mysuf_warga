@@ -30,6 +30,7 @@ import '../features/profile/presentation/screens/profile_detail_screen.dart';
 import '../features/profile/presentation/screens/notification_settings_screen.dart';
 import '../features/profile/presentation/screens/help_center_screen.dart';
 import '../features/profile/presentation/screens/security_pin_screen.dart';
+import '../features/profile/presentation/screens/update_nfc_screen.dart';
 import '../features/risk/presentation/screens/risk_screen.dart';
 import '../shared/models/vehicle.dart';
 
@@ -97,40 +98,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/auth/ktp-capture',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const KtpCaptureScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const KtpCaptureScreen()),
       ),
       GoRoute(
         path: '/auth/ocr-confirm',
         pageBuilder: (context, state) => _fadePage(
           state,
-          OcrConfirmationScreen(
-            initialData: state.extra! as KtpData,
-          ),
+          OcrConfirmationScreen(initialData: state.extra! as KtpData),
         ),
       ),
       GoRoute(
         path: '/auth/selfie-capture',
-        pageBuilder: (context, state) => _fadePage(
-          state,
-          const SelfieCaptureScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const SelfieCaptureScreen()),
       ),
       GoRoute(
         path: '/auth/verification-result',
         pageBuilder: (context, state) => _fadePage(
           state,
-          VerificationResultScreen(
-            result: state.extra! as VerificationResult,
-          ),
+          VerificationResultScreen(result: state.extra! as VerificationResult),
         ),
       ),
-      GoRoute(
-        path: '/auth/nik-kk',
-        redirect: (_, __) => '/register?step=3',
-      ),
+      GoRoute(path: '/auth/nik-kk', redirect: (_, __) => '/register?step=3'),
       GoRoute(path: '/auth/ocr-ktp', redirect: (_, _) => '/register?step=2'),
       GoRoute(path: '/auth/selfie', redirect: (_, _) => '/register?step=3'),
       GoRoute(path: '/auth/nik-kk', redirect: (_, _) => '/register?step=3'),
@@ -235,10 +225,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: ':id',
                 pageBuilder: (context, state) {
                   final id = state.pathParameters['id']!;
-                  return _fadePage(
-                    state,
-                    TransactionDetailScreen(id: id),
-                  );
+                  return _fadePage(state, TransactionDetailScreen(id: id));
                 },
               ),
             ],
@@ -267,6 +254,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: 'pin',
                 pageBuilder: (context, state) =>
                     _fadePage(state, const SecurityPinScreen()),
+              ),
+              GoRoute(
+                path: 'update-nfc',
+                pageBuilder: (context, state) =>
+                    _fadePage(state, const UpdateNfcScreen()),
               ),
             ],
           ),

@@ -221,6 +221,9 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
 
   Widget _buildTransactionCard(WalletTransaction tx) {
     final isIncoming = tx.transactionFlow == TransactionFlow.inflow;
+    final isUsingWalletBalance =
+        tx.transactionFlow == TransactionFlow.outflow &&
+        tx.balanceAfter < tx.balanceBefore;
     final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt);
     
     IconData icon;
@@ -304,7 +307,11 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
-                        color: isIncoming ? AppColors.success : Colors.black87,
+                        color: isIncoming
+                            ? AppColors.success
+                            : (isUsingWalletBalance
+                                ? AppColors.primaryRed
+                                : Colors.black87),
                       ),
                     ),
                     if (tx.status != WalletTransactionStatus.success) ...[

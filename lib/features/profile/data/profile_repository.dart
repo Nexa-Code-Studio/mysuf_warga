@@ -9,11 +9,9 @@ import '../../auth/domain/auth_session.dart';
 import '../domain/profile_state.dart';
 
 class ProfileRepository {
-  ProfileRepository({
-    Dio? dio,
-    AuthSecureStorage? secureStorage,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
-       _secureStorage = secureStorage ?? AuthSecureStorage();
+  ProfileRepository({Dio? dio, AuthSecureStorage? secureStorage})
+    : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
+      _secureStorage = secureStorage ?? AuthSecureStorage();
 
   final Dio _dio;
   final AuthSecureStorage _secureStorage;
@@ -23,9 +21,7 @@ class ProfileRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         '/users/me/profile',
         options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
         ),
       );
 
@@ -48,10 +44,7 @@ class ProfileRepository {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/refresh',
-        data: {
-          'refresh_token': refreshToken,
-          'client_type': 'BUYER_ANDROID',
-        },
+        data: {'refresh_token': refreshToken, 'client_type': 'BUYER_ANDROID'},
       );
 
       final body = response.data;
@@ -68,7 +61,9 @@ class ProfileRepository {
     }
   }
 
-  Future<T> _withAuthorizedAction<T>(Future<T> Function(String accessToken) action) async {
+  Future<T> _withAuthorizedAction<T>(
+    Future<T> Function(String accessToken) action,
+  ) async {
     var accessToken = await _secureStorage.loadAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
       throw Exception('Sesi login tidak ditemukan. Silakan login kembali.');
@@ -90,14 +85,21 @@ class ProfileRepository {
     await _withAuthorizedAction((accessToken) async {
       await _dio.post(
         '/users/me/pin',
-        data: {
-          'pin': pin,
-          'old_pin': oldPin,
-        },
+        data: {'pin': pin, 'old_pin': oldPin},
         options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
+        ),
+      );
+    });
+  }
+
+  Future<void> updateNfc(String nfcId) async {
+    await _withAuthorizedAction((accessToken) async {
+      await _dio.put(
+        '/users/me/buyer-profile',
+        data: {'ktp_nfc_id_snapshot': nfcId},
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
         ),
       );
     });
@@ -107,13 +109,9 @@ class ProfileRepository {
     await _withAuthorizedAction((accessToken) async {
       await _dio.post(
         '/users/me/device-token',
-        data: {
-          'token': token,
-        },
+        data: {'token': token},
         options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $accessToken',
-          },
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $accessToken'},
         ),
       );
     });

@@ -218,9 +218,14 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
                 
                 _buildDetailRow(
                   label: 'Metode Pembayaran',
-                  value: tx.type == TransactionType.topUp 
-                      ? 'Xendit Payment Session' 
-                      : 'E-Wallet Internal',
+                  value: tx.type == TransactionType.topUp
+                      ? 'Xendit Payment Session'
+                      : switch (tx.paymentMethod) {
+                          'CASH' => 'Tunai / Cash',
+                          'QRIS' => 'QRIS',
+                          'WALLET' => 'E-Wallet Internal',
+                          _ => 'E-Wallet Internal',
+                        },
                 ),
                 _buildDivider(),
                 
@@ -240,13 +245,17 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
 
                 _buildDetailRow(
                   label: 'Saldo Sebelum',
-                  value: formatCurrencyIdr(tx.balanceBefore),
+                  value: tx.paymentMethod == 'CASH' || tx.paymentMethod == 'QRIS'
+                      ? 'Tidak mempengaruhi wallet'
+                      : formatCurrencyIdr(tx.balanceBefore),
                 ),
                 _buildDivider(),
 
                 _buildDetailRow(
                   label: 'Saldo Sesudah',
-                  value: formatCurrencyIdr(tx.balanceAfter),
+                  value: tx.paymentMethod == 'CASH' || tx.paymentMethod == 'QRIS'
+                      ? 'Tidak mempengaruhi wallet'
+                      : formatCurrencyIdr(tx.balanceAfter),
                 ),
 
                 if (tx.description != null && tx.description!.trim().isNotEmpty) ...[

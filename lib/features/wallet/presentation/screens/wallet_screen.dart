@@ -225,6 +225,9 @@ class WalletScreen extends ConsumerWidget {
                       .map(
                         (item) {
                           final isIncoming = item.transactionFlow == TransactionFlow.inflow;
+                          final isUsingWalletBalance =
+                              item.transactionFlow == TransactionFlow.outflow &&
+                              item.balanceAfter < item.balanceBefore;
                           final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt);
                           
                           IconData icon;
@@ -312,7 +315,9 @@ class WalletScreen extends ConsumerWidget {
                                                 ?.copyWith(
                                                   color: isIncoming
                                                       ? AppColors.success
-                                                      : AppColors.textPrimary,
+                                                      : (isUsingWalletBalance
+                                                          ? AppColors.primaryRed
+                                                          : AppColors.textPrimary),
                                                   fontWeight: FontWeight.w800,
                                                 ),
                                           ),

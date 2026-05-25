@@ -33,15 +33,15 @@ class QuotaScreen extends ConsumerWidget {
                       color: const Color(0xFFFFF4F5),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline,
-                              color: AppColors.primaryRed),
+                          const Icon(
+                            Icons.info_outline,
+                            color: AppColors.primaryRed,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Kuota dan status eligible tampil setelah verifikasi. Perhitungan dilakukan oleh sistem dan tidak ditampilkan di aplikasi.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
                           ),
@@ -49,87 +49,108 @@ class QuotaScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    AppCard(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Kuota Bulanan',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFDECEC),
-                                  borderRadius: BorderRadius.circular(999),
+                    if (personal != null)
+                      AppCard(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Kuota Bulanan',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
-                                child: Text(
-                                  'Aktif',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: AppColors.primaryRed,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDECEC),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    'Aktif',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: AppColors.primaryRed,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                formatLiters(personal.remainingLiters),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .displaySmall
-                                    ?.copyWith(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'tersisa dari ${formatLiters(personal.quotaLiters)}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(color: AppColors.textSecondary),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: LinearProgressIndicator(
-                              value: personal.progress,
-                              minHeight: 8,
-                              backgroundColor: AppColors.softGray,
-                              color: AppColors.primaryRed,
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Periode ${personal.periodLabel}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: AppColors.textSecondary),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  formatLiters(personal.remainingLiters),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'tersisa dari ${formatLiters(personal.quotaLiters)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value: personal.progress,
+                                minHeight: 8,
+                                backgroundColor: AppColors.softGray,
+                                color: AppColors.primaryRed,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Periode ${personal.periodLabel}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      AppCard(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Kuota Bulanan',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Kuota subsidi bulanan tidak tersedia karena KK Anda tidak memenuhi syarat saat ini.',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 20),
                     AppCard(
                       child: Column(
@@ -137,18 +158,14 @@ class QuotaScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Jenis BBM yang diizinkan',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 12),
                           if (data.subsidizedFuels.isEmpty)
                             Text(
                               'Tidak ada jenis BBM bersubsidi yang terdaftar.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: AppColors.textSecondary),
                             )
                           else
@@ -188,18 +205,14 @@ class QuotaScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Kuota per Kendaraan',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 12),
                           if (data.vehicles.isEmpty)
                             Text(
                               'Belum ada kendaraan terdaftar.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: AppColors.textSecondary),
                             )
                           else
@@ -214,7 +227,8 @@ class QuotaScreen extends ConsumerWidget {
                                 return _VehicleQuotaTile(
                                   plateNumber: vehicle.plateNumber,
                                   brand: vehicle.brand,
-                                  totalLitersPurchased: vehicle.totalLitersPurchased,
+                                  totalLitersPurchased:
+                                      vehicle.totalLitersPurchased,
                                 );
                               },
                             ),
@@ -277,7 +291,10 @@ class _VehicleQuotaTile extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.directions_car, color: AppColors.primaryRed),
+            child: const Icon(
+              Icons.directions_car,
+              color: AppColors.primaryRed,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -286,18 +303,16 @@ class _VehicleQuotaTile extends StatelessWidget {
               children: [
                 Text(
                   plateNumber,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   brand,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -308,18 +323,16 @@ class _VehicleQuotaTile extends StatelessWidget {
             children: [
               Text(
                 formatLiters(totalLitersPurchased),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
                 'Total Pembelian',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),

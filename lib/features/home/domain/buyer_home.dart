@@ -146,7 +146,9 @@ class RecentTransactionHome {
       title: json['title'] as String? ?? '',
       subtitle: json['subtitle'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      transactionFlow: TransactionFlow.fromValue(json['transaction_flow'] as String? ?? ''),
+      transactionFlow: TransactionFlow.fromValue(
+        json['transaction_flow'] as String? ?? '',
+      ),
       status: json['status'] as String? ?? '',
       occurredAt: json['occurred_at'] != null
           ? DateTime.parse(json['occurred_at'] as String)
@@ -167,7 +169,8 @@ class RiskStatusHome {
 
   factory RiskStatusHome.fromJson(Map<String, dynamic> json) {
     return RiskStatusHome(
-      verificationStatus: json['verification_status'] as String? ?? 'UNVERIFIED',
+      verificationStatus:
+          json['verification_status'] as String? ?? 'UNVERIFIED',
       riskScore: (json['risk_score'] as num?)?.toDouble() ?? 0.0,
     );
   }
@@ -175,7 +178,7 @@ class RiskStatusHome {
 
 class BuyerHome {
   final VehicleVerificationHome vehicleVerification;
-  final PersonalQuotaHome personalQuota;
+  final PersonalQuotaHome? personalQuota;
   final NearbyGasStationsHome nearbyGasStations;
   final List<RecentTransactionHome> recentTransactions;
   final RiskStatusHome riskStatus;
@@ -193,9 +196,11 @@ class BuyerHome {
       vehicleVerification: VehicleVerificationHome.fromJson(
         json['vehicle_verification'] as Map<String, dynamic>? ?? {},
       ),
-      personalQuota: PersonalQuotaHome.fromJson(
-        json['personal_quota'] as Map<String, dynamic>? ?? {},
-      ),
+      personalQuota: json['personal_quota'] is Map<String, dynamic>
+          ? PersonalQuotaHome.fromJson(
+              json['personal_quota'] as Map<String, dynamic>,
+            )
+          : null,
       nearbyGasStations: NearbyGasStationsHome.fromJson(
         json['nearby_gas_stations'] as Map<String, dynamic>? ?? {},
       ),
