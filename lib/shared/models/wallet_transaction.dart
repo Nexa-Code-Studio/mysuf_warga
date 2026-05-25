@@ -58,6 +58,7 @@ class WalletTransaction {
   final int balanceAfter;
   final String? counterpartyWalletId;
   final String? paymentTransactionId;
+  final String? paymentMethod;
   final String? description;
   final WalletTransactionStatus status;
   final DateTime createdAt;
@@ -76,6 +77,7 @@ class WalletTransaction {
     required this.balanceAfter,
     this.counterpartyWalletId,
     this.paymentTransactionId,
+    this.paymentMethod,
     this.description,
     required this.status,
     required this.createdAt,
@@ -128,6 +130,7 @@ class WalletTransaction {
       balanceAfter: parsedAfter,
       counterpartyWalletId: json['counterparty_wallet_id'] as String?,
       paymentTransactionId: json['payment_transaction_id'] as String?,
+      paymentMethod: json['payment_method'] as String?,
       description: json['description'] as String?,
       status: WalletTransactionStatus.fromValue(json['status'] as String? ?? ''),
       createdAt: json['created_at'] != null
