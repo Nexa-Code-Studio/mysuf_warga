@@ -394,7 +394,7 @@ class _SubsidyVerificationScreenState extends State<SubsidyVerificationScreen> {
     } else if (_sharedVehicle &&
         _controllers.sharedRelation.text.trim().isEmpty) {
       message = 'Relasi keluarga wajib diisi.';
-    } else if ((_usageType == 'OJOL' || _usageType == 'UMKM') &&
+    } else if ((_usageType == 'COMMERCIAL_MOTORCYCLE' || _usageType == 'COMMERCIAL_CAR' || _usageType == 'COMMERCIAL_TRUCK') &&
         _productiveBusinessDocPath == null) {
       message = 'Bukti Usaha Produktif wajib dilampirkan.';
     } else if (!_agreeData || !_agreeRisk || !_agreeAi) {

@@ -52,9 +52,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) {
         return;
       }
+      final errorMsg = error.toString().replaceFirst('Exception: ', '');
+      if (errorMsg.contains('diblokir') || errorMsg.contains('dibekukan')) {
+        context.go('/restricted', extra: errorMsg);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          content: Text(errorMsg),
         ),
       );
     } finally {

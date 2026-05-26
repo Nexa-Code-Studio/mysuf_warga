@@ -32,13 +32,13 @@ class VerificationUsageStep extends StatelessWidget {
               DropdownField(
                 label: 'Tujuan Penggunaan',
                 value: usageType,
-                items: const ['PERSONAL', 'OJOL', 'UMKM'],
+                items: const ['PERSONAL', 'COMMERCIAL_MOTORCYCLE', 'COMMERCIAL_CAR', 'COMMERCIAL_TRUCK'],
                 onChanged: onUsageTypeChanged,
               ),
             ],
           ),
         ),
-        if (usageType == 'OJOL' || usageType == 'UMKM') ...[
+        if (usageType == 'COMMERCIAL_MOTORCYCLE' || usageType == 'COMMERCIAL_CAR' || usageType == 'COMMERCIAL_TRUCK') ...[
           const SizedBox(height: 16),
           const SectionTitle('Bukti Usaha Produktif'),
           const SizedBox(height: 12),
