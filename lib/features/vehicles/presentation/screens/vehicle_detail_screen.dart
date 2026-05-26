@@ -278,19 +278,19 @@ class VehicleDetailScreen extends ConsumerWidget {
 }
 
 bool _isCommercialUsage(String usageType) {
-  return usageType == 'OJOL' ||
-      usageType == 'UMKM' ||
-      usageType == 'COMPANY_OPERATIONAL';
+  return usageType == 'COMMERCIAL_MOTORCYCLE' ||
+      usageType == 'COMMERCIAL_CAR' ||
+      usageType == 'COMMERCIAL_TRUCK';
 }
 
 Color _usageColor(String usageType) {
-  if (usageType == 'OJOL') {
+  if (usageType == 'COMMERCIAL_MOTORCYCLE') {
     return AppColors.warning;
   }
-  if (usageType == 'UMKM') {
+  if (usageType == 'COMMERCIAL_CAR') {
     return Colors.blue;
   }
-  if (usageType == 'COMPANY_OPERATIONAL') {
+  if (usageType == 'COMMERCIAL_TRUCK') {
     return Colors.teal;
   }
   return AppColors.success;

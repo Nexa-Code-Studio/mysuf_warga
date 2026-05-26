@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../shared/widgets/app_scaffold.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/restricted_screen.dart';
 import '../features/auth/presentation/screens/logout_processing_screen.dart';
 import '../features/auth/presentation/screens/onboarding_screen.dart';
 import '../features/auth/presentation/screens/registration_processing_screen.dart';
@@ -61,6 +62,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => _fadePage(state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/restricted',
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          RestrictedScreen(
+            reason: state.extra as String? ?? 'Akses Anda dibatasi oleh sistem.',
+          ),
+        ),
       ),
       GoRoute(
         path: '/register',
