@@ -41,13 +41,13 @@ import '../features/auth/presentation/screens/selfie_capture_screen.dart';
 import '../features/auth/presentation/screens/verification_result_screen.dart';
 import '../features/auth/domain/models/ktp_data.dart';
 import '../features/auth/domain/models/verification_result.dart';
+import '../core/services/navigator_service.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: NavigatorService.navigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(

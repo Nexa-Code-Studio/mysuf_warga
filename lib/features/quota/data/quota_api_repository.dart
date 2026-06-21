@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/dio_client.dart';
 import '../../auth/domain/auth_session.dart';
 import '../domain/buyer_quota.dart';
 import '../../auth/data/auth_secure_storage.dart';
@@ -11,7 +11,7 @@ class QuotaApiRepository {
   QuotaApiRepository({
     Dio? dio,
     AuthSecureStorage? secureStorage,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
+  }) : _dio = dio ?? createDio(),
        _secureStorage = secureStorage ?? AuthSecureStorage();
 
   final Dio _dio;
