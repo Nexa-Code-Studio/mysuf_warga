@@ -1,23 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/models/wallet_transaction.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../data/wallet_providers.dart';
-import 'package:intl/intl.dart';
 
-class WalletScreen extends ConsumerWidget {
+class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends ConsumerState<WalletScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    final direction = _scrollController.position.userScrollDirection;
+    if (direction == ScrollDirection.reverse) {
+      if (ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(false);
+      }
+    } else if (direction == ScrollDirection.forward) {
+      if (!ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(true);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final wallet = ref.watch(walletProvider);
     final transactions = ref.watch(walletTransactionsProvider);
 
@@ -36,6 +70,7 @@ class WalletScreen extends ConsumerWidget {
             } catch (_) {}
           },
           child: ListView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
@@ -140,53 +175,29 @@ class WalletScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               children: [
-                _WalletAction(
-                  label: 'Top Up',
-                  icon: Icons.north_east,
-                  onTap: () => context.go('/wallet/topup'),
+                Expanded(
+                  child: _InlineAction(
+                    label: 'Top Up',
+                    subtitle: 'Tambah saldo dompet',
+                    icon: Icons.add_card_rounded,
+                    onTap: () => context.go('/wallet/topup'),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _WalletAction(
-                  label: 'Transfer',
-                  icon: Icons.swap_horiz,
-                  onTap: () => context.go('/wallet/transfer'),
-                ),
-                const SizedBox(width: 12),
-                _WalletAction(
-                  label: 'Tarik Tunai',
-                  icon: Icons.payments_outlined,
-                  onTap: () {},
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _InlineAction(
+                    label: 'Transfer',
+                    subtitle: 'Kirim ke KTP lain',
+                    icon: Icons.swap_horiz,
+                    onTap: () => context.go('/wallet/transfer'),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            AppCard(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _InlineAction(
-                      label: 'Tap E-KTP',
-                      subtitle: 'Simulasi transaksi NFC',
-                      icon: Icons.nfc_rounded,
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _InlineAction(
-                      label: 'QRIS',
-                      subtitle: 'Scan QR untuk bayar',
-                      icon: Icons.qr_code_2,
-                      onTap: () => context.go('/wallet/qris'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             SectionHeader(
               title: 'Riwayat Transaksi',
               actionLabel: 'Semua',
@@ -196,26 +207,27 @@ class WalletScreen extends ConsumerWidget {
             transactions.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return AppCard(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 40,
-                            color: Colors.grey.shade400,
+                  return Container(
+                    height: 240,
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Belum ada transaksi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            fontSize: 15,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Belum ada transaksi',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -225,9 +237,6 @@ class WalletScreen extends ConsumerWidget {
                       .map(
                         (item) {
                           final isIncoming = item.transactionFlow == TransactionFlow.inflow;
-                          final isUsingWalletBalance =
-                              item.transactionFlow == TransactionFlow.outflow &&
-                              item.balanceAfter < item.balanceBefore;
                           final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt);
                           
                           IconData icon;
@@ -238,117 +247,67 @@ class WalletScreen extends ConsumerWidget {
                             case TransactionType.topUp:
                               icon = Icons.add_card_rounded;
                               iconColor = AppColors.success;
-                              bgIconColor = AppColors.success.withOpacity(0.1);
+                              bgIconColor = const Color(0xFFEDFDF5);
+                              break;
+                            case TransactionType.transfer:
+                              icon = Icons.swap_horiz;
+                              iconColor = AppColors.primaryRed;
+                              bgIconColor = const Color(0xFFFFF4F5);
                               break;
                             case TransactionType.fuelPurchase:
                               icon = Icons.local_gas_station_rounded;
                               iconColor = AppColors.primaryRed;
-                              bgIconColor = AppColors.primaryRed.withOpacity(0.1);
+                              bgIconColor = const Color(0xFFFFF4F5);
                               break;
-                            case TransactionType.refund:
-                              icon = Icons.replay_rounded;
-                              iconColor = Colors.blue;
-                              bgIconColor = Colors.blue.withOpacity(0.1);
-                              break;
-                            case TransactionType.adminAdjustment:
-                              icon = Icons.tune_rounded;
-                              iconColor = Colors.orange;
-                              bgIconColor = Colors.orange.withOpacity(0.1);
-                              break;
+                            default:
+                              icon = Icons.payments_rounded;
+                              iconColor = AppColors.textSecondary;
+                              bgIconColor = AppColors.softGray;
                           }
 
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.only(bottom: 12),
                             child: AppCard(
-                              padding: EdgeInsets.zero,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(16),
-                                onTap: () => context.push('/transactions/${item.id}'),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: bgIconColor,
-                                        child: Icon(
-                                          icon,
-                                          color: iconColor,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.description ?? item.type.label,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleSmall
-                                                  ?.copyWith(fontWeight: FontWeight.w700),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              formattedDate,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    color: AppColors.textSecondary,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            '${isIncoming ? '+' : '-'} ${formatCurrencyIdr(item.amount)}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: isIncoming
-                                                      ? AppColors.success
-                                                      : (isUsingWalletBalance
-                                                          ? AppColors.primaryRed
-                                                          : AppColors.textPrimary),
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                          ),
-                                          if (item.status != WalletTransactionStatus.success) ...[
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: item.status == WalletTransactionStatus.pending
-                                                    ? Colors.orange.withOpacity(0.1)
-                                                    : AppColors.primaryRed.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                item.status.label,
-                                                style: TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: item.status == WalletTransactionStatus.pending
-                                                      ? Colors.orange
-                                                      : AppColors.primaryRed,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ],
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: bgIconColor,
+                                    child: Icon(icon, color: iconColor),
                                   ),
-                                ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.description ?? item.type.label,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          formattedDate,
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${isIncoming ? '+' : '-'} ${formatCurrencyIdr(item.amount)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isIncoming
+                                          ? AppColors.success
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -383,42 +342,7 @@ class WalletScreen extends ConsumerWidget {
   }
 }
 
-class _WalletAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
 
-  const _WalletAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            children: [
-              CircleAvatar(
-                backgroundColor: const Color(0xFFF3E8FF),
-                child: Icon(icon, color: AppColors.primaryRed),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _InlineAction extends StatelessWidget {
   final String label;

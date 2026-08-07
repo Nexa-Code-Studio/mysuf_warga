@@ -2,7 +2,8 @@ enum TransactionType {
   topUp('TOP_UP', 'Top Up Saldo'),
   fuelPurchase('FUEL_PURCHASE', 'Pembelian Bahan Bakar'),
   refund('REFUND', 'Pengembalian Dana'),
-  adminAdjustment('ADMIN_ADJUSTMENT', 'Penyesuaian Admin');
+  adminAdjustment('ADMIN_ADJUSTMENT', 'Penyesuaian Admin'),
+  transfer('TRANSFER', 'Transfer Saldo');
 
   final String value;
   final String label;

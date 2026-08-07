@@ -20,14 +20,29 @@ Pasang pustaka dan dependensi proyek:
 flutter pub get
 ```
 
-### 3. Jalankan Aplikasi dengan Base URL API
-Jalankan aplikasi Flutter menggunakan konstanta `--dart-define` untuk mengarahkan request HTTP ke server lokal backend Anda (biasanya port `8080`):
-```bash
-flutter run --dart-define=MYSUF_API_BASE_URL=http://10.0.2.2:8080/api/v1
-```
+### 3. Jalankan Aplikasi (Pilihan Environment API)
 
-> [!TIP]
-> IP `10.0.2.2` adalah rute default Android Emulator untuk mengakses port localhost pada mesin induk Anda. Jika menggunakan perangkat fisik, Anda bisa mencocokkannya dengan IP lokal komputer Anda atau menggunakan `http://localhost:8080/api/v1` jika port forwarding `adb reverse` aktif.
+Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging **https://mysuf.nexacode.dev**. Anda bisa mengubah perilaku ini saat menjalankan perintah run.
+
+*   **Mode Staging/Produksi (Default)**
+    Cukup jalankan aplikasi secara normal untuk menghubungkan ke API server cloud:
+    ```bash
+    flutter run
+    ```
+
+*   **Mode Localhost (Development)**
+    Gunakan flag `--dart-define=USE_LOCALHOST=true` untuk otomatis mengarahkan koneksi ke localhost backend (`http://localhost:8080/api/v1`):
+    ```bash
+    flutter run --dart-define=USE_LOCALHOST=true
+    ```
+    > [!TIP]
+    > Pastikan Anda telah mengaktifkan ADB reverse (`adb reverse tcp:8080 tcp:8080`) jika menggunakan Emulator Android agar port `8080` lokal Anda dapat diakses oleh perangkat emulator.
+
+*   **Custom API URL**
+    Gunakan flag `--dart-define=MYSUF_API_BASE_URL=<custom_url>` jika Anda ingin menggunakan custom IP atau port tertentu (misalnya emulator Android tanpa adb reverse):
+    ```bash
+    flutter run --dart-define=MYSUF_API_BASE_URL=http://10.0.2.2:8080/api/v1
+    ```
 
 ---
 
