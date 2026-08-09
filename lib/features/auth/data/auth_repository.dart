@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/dio_client.dart';
 import 'auth_local_storage.dart';
 import 'auth_secure_storage.dart';
 import '../domain/auth_session.dart';
@@ -14,7 +14,7 @@ class AuthRepository {
     Dio? dio,
     AuthLocalStorage? localStorage,
     AuthSecureStorage? secureStorage,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: AppConstants.apiBaseUrl)),
+  }) : _dio = dio ?? createDio(),
        _localStorage = localStorage ?? AuthLocalStorage(),
        _secureStorage = secureStorage ?? AuthSecureStorage();
 

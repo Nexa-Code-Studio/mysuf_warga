@@ -8,6 +8,8 @@ class UserProfile {
   final int quotaRemaining;
   final int walletBalance;
   final bool isPinActive;
+  final String pekerjaan;
+  final double penghasilan;
 
   const UserProfile({
     required this.name,
@@ -19,6 +21,8 @@ class UserProfile {
     required this.quotaRemaining,
     required this.walletBalance,
     this.isPinActive = false,
+    required this.pekerjaan,
+    required this.penghasilan,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class UserProfile {
       quotaRemaining: json['quotaRemaining'] as int? ?? 0,
       walletBalance: json['walletBalance'] as int? ?? 0,
       isPinActive: json['isPinActive'] as bool? ?? false,
+      pekerjaan: json['pekerjaan'] as String? ?? 'LAINNYA',
+      penghasilan: (json['penghasilan'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

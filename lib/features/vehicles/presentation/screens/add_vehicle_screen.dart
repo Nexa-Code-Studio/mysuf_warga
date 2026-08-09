@@ -338,7 +338,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
-                          context.go('/home/quota');
+                          context.go('/subsidy');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryRed,

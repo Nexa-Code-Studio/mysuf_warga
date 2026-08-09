@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,11 +7,44 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/providers/mock_providers.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    final direction = _scrollController.position.userScrollDirection;
+    if (direction == ScrollDirection.reverse) {
+      if (ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(false);
+      }
+    } else if (direction == ScrollDirection.forward) {
+      if (!ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(true);
+      }
+    }
+  }
 
   Future<void> _confirmUpdateNfc(BuildContext context) async {
     final shouldContinue = await showDialog<bool>(
@@ -45,7 +79,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final risk = ref.watch(riskProvider);
 
@@ -53,104 +87,86 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(20),
           children: [
             profile.when(
-              data: (data) => AppCard(
+              data: (data) => GestureDetector(
                 onTap: () => context.go('/profile/detail'),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: const Color(0xFFFFF1F3),
-                      child: Text(
-                        data.name.isNotEmpty
-                            ? (data.name.length >= 2
-                                  ? data.name.substring(0, 2).toUpperCase()
-                                  : data.name.toUpperCase())
-                            : '',
-                        style: const TextStyle(
-                          color: AppColors.primaryRed,
-                          fontWeight: FontWeight.w700,
+                    const SizedBox(height: 8),
+                    Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 44,
+                          backgroundColor: const Color(0xFFFFF1F3),
+                          child: Text(
+                            data.name.isNotEmpty
+                                ? (data.name.length >= 2
+                                    ? data.name.substring(0, 2).toUpperCase()
+                                    : data.name.toUpperCase())
+                                : '',
+                            style: const TextStyle(
+                              color: AppColors.primaryRed,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 28,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data.name
-                                .trim()
-                                .split(RegExp(r'\s+'))
-                                .take(2)
-                                .join(' '),
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'NIK: ${data.nikMasked}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.textSecondary),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            size: 14,
+                            color: Colors.white,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const Icon(Icons.chevron_right),
+                    const SizedBox(height: 14),
+                    Text(
+                      data.name.trim(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'NIK: ${data.nikMasked}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),
-              loading: () => const LoadingSkeleton(height: 90),
+              loading: () => const Center(child: LoadingSkeleton(height: 120)),
               error: (_, _) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 16),
-            profile.when(
-              data: (data) => AppCard(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    _MetricCard(
-                      label: 'Saldo',
-                      value: formatCurrencyIdr(data.walletBalance),
-                      icon: Icons.account_balance_wallet_outlined,
-                    ),
-                    const SizedBox(width: 16),
-                    _MetricCard(
-                      label: 'Kuota Sisa',
-                      value: '${data.quotaRemaining} L',
-                      icon: Icons.local_gas_station_outlined,
-                    ),
-                    const SizedBox(width: 16),
-                    _MetricCard(
-                      label: 'Kendaraan',
-                      value: '${data.vehiclesCount} Unit',
-                      icon: Icons.directions_car_outlined,
-                    ),
-                  ],
-                ),
-              ),
-              loading: () => const LoadingSkeleton(height: 90),
-              error: (_, _) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
             const SectionHeader(title: 'Akun & Identitas'),
             const SizedBox(height: 12),
             _MenuTile(
-              title: 'Anggota Keluarga',
-              subtitle: 'Otomatis dari KK yang sama',
-              icon: Icons.group_outlined,
-              onTap: () => context.go('/vehicles/family'),
+              title: 'Status Subsidi KTP',
+              subtitle: 'Cek kelayakan, pekerjaan, dan sisa kuota',
+              icon: Icons.badge_outlined,
+              onTap: () => context.go('/subsidy'),
             ),
             const SizedBox(height: 10),
-            _MenuTile(
-              title: 'Kendaraan Saya',
-              subtitle: 'Input kendaraan cukup sekali per KK',
-              icon: Icons.directions_car_outlined,
-              onTap: () => context.go('/vehicles'),
-            ),
-            const SizedBox(height: 20),
             const SectionHeader(title: 'Keamanan'),
             const SizedBox(height: 12),
             profile.when(

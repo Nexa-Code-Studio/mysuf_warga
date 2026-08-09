@@ -1,10 +1,17 @@
 class AppConstants {
   static const String appName = 'MySuF';
   static const String supportEmail = 'support@mysuf.id';
-  static const String apiBaseUrl = String.fromEnvironment(
-    'MYSUF_API_BASE_URL',
-    defaultValue: 'https://api.smkn1wringin.sch.id/api/v1',
+  static const bool useLocalhost = bool.fromEnvironment(
+    'USE_LOCALHOST',
+    defaultValue: false,
   );
+
+  static const String apiBaseUrl = useLocalhost
+      ? 'http://localhost:8080/api/v1'
+      : String.fromEnvironment(
+          'MYSUF_API_BASE_URL',
+          defaultValue: 'https://mysuf.nexacode.dev/api/v1',
+        );
 
   static const Duration registrationPollInterval = Duration(seconds: 3);
   static const Duration registrationRefreshDebounce = Duration(seconds: 2);

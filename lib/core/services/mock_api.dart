@@ -20,6 +20,8 @@ class MockApi {
       vehiclesCount: 2,
       quotaRemaining: 150,
       walletBalance: 1500000,
+      pekerjaan: 'NELAYAN',
+      penghasilan: 2500000.0,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_skeleton.dart';
 import '../../../../shared/widgets/section_header.dart';
@@ -15,6 +17,8 @@ import '../../domain/buyer_home.dart';
 import '../providers/home_providers.dart';
 import '../../../../shared/models/wallet_transaction.dart';
 import '../../../../core/services/notification_service.dart';
+
+import '../../../../core/utils/formatters.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final bool showVerifyNotice;
@@ -28,11 +32,32 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late bool _showVerifyNotice;
   bool _didShowVerifyPopup = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _showVerifyNotice = widget.showVerifyNotice;
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    final direction = _scrollController.position.userScrollDirection;
+    if (direction == ScrollDirection.reverse) {
+      if (ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(false);
+      }
+    } else if (direction == ScrollDirection.forward) {
+      if (!ref.read(bottomNavVisibleProvider)) {
+        ref.read(bottomNavVisibleProvider.notifier).setVisible(true);
+      }
+    }
   }
 
   @override
@@ -76,6 +101,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
           child: homeData.when(
             data: (home) => ListView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               children: [
                 _Header(profile: profile, home: home),
@@ -89,6 +116,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _QuotaCard(
                   quota: home.personalQuota,
                   verificationStatus: home.riskStatus.verificationStatus,
+                ),
+                const SizedBox(height: 16),
+                profile.when(
+                  data: (profileData) => AppCard(
+                    padding: const EdgeInsets.all(16),
+                    color: Colors.white,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: AppColors.primaryRed.withOpacity(0.1),
+                          child: const Icon(
+                            Icons.account_balance_wallet,
+                            color: AppColors.primaryRed,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Saldo Dompet',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formatCurrencyIdr(profileData.walletBalance),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => context.go('/wallet/topup'),
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('Top Up'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryRed,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  loading: () => const LoadingSkeleton(height: 80),
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 24),
                 const SectionHeader(title: 'Aksi Cepat'),
@@ -515,7 +609,7 @@ class _QuotaCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       color: AppColors.primaryRed,
       borderRadius: BorderRadius.circular(24),
-      onTap: () => context.go('/home/quota'),
+      onTap: () => context.go('/subsidy'),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Stack(
@@ -600,7 +694,7 @@ class _QuickActions extends StatelessWidget {
     _QuickAction('Bayar SPBU', Icons.credit_card, '/wallet'),
     _QuickAction('Top Up', Icons.north_east, '/wallet/topup'),
     _QuickAction('Riwayat', Icons.schedule, '/transactions'),
-    _QuickAction('Keluarga', Icons.group_outlined, '/vehicles/family'),
+    _QuickAction('Subsidi', Icons.badge_outlined, '/subsidy'),
   ];
 
   const _QuickActions();

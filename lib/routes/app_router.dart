@@ -16,13 +16,14 @@ import '../features/verification/presentation/screens/subsidy_verification_scree
 import '../features/vehicles/presentation/screens/add_vehicle_screen.dart';
 import '../features/vehicles/presentation/screens/vehicle_detail_screen.dart';
 import '../features/vehicles/presentation/screens/vehicle_list_screen.dart';
+import '../features/subsidy/presentation/screens/subsidy_screen.dart';
 import '../features/family/presentation/screens/family_list_screen.dart';
 import '../features/notifications/presentation/screens/notifications_screen.dart';
 import '../features/quota/presentation/screens/quota_screen.dart';
 import '../features/wallet/presentation/screens/topup_screen.dart';
 import '../features/wallet/presentation/screens/topup_status_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
-import '../features/wallet/presentation/screens/qris_screen.dart';
+
 import '../features/wallet/presentation/screens/transfer_screen.dart';
 import '../features/transactions/presentation/screens/transaction_history_screen.dart';
 import '../features/transactions/presentation/screens/transaction_detail_screen.dart';
@@ -41,13 +42,13 @@ import '../features/auth/presentation/screens/selfie_capture_screen.dart';
 import '../features/auth/presentation/screens/verification_result_screen.dart';
 import '../features/auth/domain/models/ktp_data.dart';
 import '../features/auth/domain/models/verification_result.dart';
+import '../core/services/navigator_service.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: NavigatorService.navigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(
@@ -154,8 +155,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'quota',
-                pageBuilder: (context, state) =>
-                    _fadePage(state, const QuotaScreen()),
+                redirect: (context, state) => '/subsidy',
               ),
               GoRoute(
                 path: 'risk',
@@ -165,28 +165,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
-            path: '/vehicles',
+            path: '/subsidy',
             pageBuilder: (context, state) =>
-                _fadePage(state, const VehicleListScreen()),
-            routes: [
-              GoRoute(
-                path: 'detail',
-                pageBuilder: (context, state) => _fadePage(
-                  state,
-                  VehicleDetailScreen(vehicle: state.extra! as Vehicle),
-                ),
-              ),
-              GoRoute(
-                path: 'add',
-                pageBuilder: (context, state) =>
-                    _fadePage(state, const AddVehicleScreen()),
-              ),
-              GoRoute(
-                path: 'family',
-                pageBuilder: (context, state) =>
-                    _fadePage(state, const FamilyListScreen()),
-              ),
-            ],
+                _fadePage(state, const SubsidyScreen()),
           ),
           GoRoute(
             path: '/wallet',
@@ -214,11 +195,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   ),
                 ],
               ),
-              GoRoute(
-                path: 'qris',
-                pageBuilder: (context, state) =>
-                    _fadePage(state, const QrisScreen()),
-              ),
+
               GoRoute(
                 path: 'transfer',
                 pageBuilder: (context, state) =>

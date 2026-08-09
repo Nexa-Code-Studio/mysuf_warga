@@ -143,6 +143,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _emailController.text = 'ekya@mysuf.com';
+                              _passwordController.text = 'Password123';
+                            });
+                          },
+                          icon: const Icon(Icons.bolt, color: Colors.amber),
+                          label: const Text(
+                            'Uji Coba Cepat (ekya)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryRed,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
