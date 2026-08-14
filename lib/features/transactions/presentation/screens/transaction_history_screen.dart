@@ -414,7 +414,7 @@ class _TransactionHistoryScreenState
     final isUsingWalletBalance = tx.transactionFlow == TransactionFlow.outflow &&
         tx.balanceAfter < tx.balanceBefore;
     final formattedDate =
-        DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt);
+        DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt.toLocal());
 
     IconData icon;
     Color iconColor;

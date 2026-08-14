@@ -112,7 +112,7 @@ class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScree
 
   Widget _buildDetailContent(WalletTransaction tx) {
     final isIncoming = tx.transactionFlow == TransactionFlow.inflow;
-    final formattedDate = DateFormat('dd MMMM yyyy, HH:mm').format(tx.createdAt);
+    final formattedDate = DateFormat('dd MMMM yyyy, HH:mm').format(tx.createdAt.toLocal());
 
     IconData headerIcon;
     Color statusColor;

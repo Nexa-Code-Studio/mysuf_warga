@@ -237,7 +237,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       .map(
                         (item) {
                           final isIncoming = item.transactionFlow == TransactionFlow.inflow;
-                          final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt);
+                          final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt.toLocal());
                           
                           IconData icon;
                           Color iconColor;
