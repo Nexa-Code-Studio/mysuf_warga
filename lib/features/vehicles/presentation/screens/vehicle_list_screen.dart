@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../shared/models/vehicle.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -320,7 +321,7 @@ class _CommercialQuotaBar extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${used.toStringAsFixed(1)}L / ${quota.toStringAsFixed(1)}L',
+              '${formatLitersValue(used)} / ${formatLiters(quota)}',
               style: Theme.of(context)
                   .textTheme
                   .labelSmall

@@ -12,5 +12,12 @@ String formatCurrencyIdr(num value) {
 }
 
 String formatLiters(num value) {
-  return '${value.toStringAsFixed(0)} L';
+  final isWhole = value % 1 == 0;
+  final formatted = isWhole ? value.toInt().toString() : value.toStringAsFixed(1);
+  return '$formatted L';
+}
+
+String formatLitersValue(num value) {
+  final isWhole = value % 1 == 0;
+  return isWhole ? value.toInt().toString() : value.toStringAsFixed(1);
 }

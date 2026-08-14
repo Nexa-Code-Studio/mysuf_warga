@@ -661,7 +661,7 @@ class _QuotaCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     isVerified && hasQuota
-                        ? '${quota!.remainingLiters.toStringAsFixed(0)} L'
+                        ? formatLiters(quota!.remainingLiters)
                         : '--',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -673,7 +673,7 @@ class _QuotaCard extends StatelessWidget {
                     !isVerified
                         ? 'Lengkapi verifikasi untuk melihat kuota subsidi Anda.'
                         : hasQuota
-                        ? 'Sisa kuota dari total ${quota!.quotaLiters.toStringAsFixed(0)} Liter bulan ini.'
+                        ? 'Sisa kuota dari total ${formatLiters(quota!.quotaLiters)} bulan ini.'
                         : 'Kuota subsidi tidak tersedia karena KK Anda tidak memenuhi syarat saat ini.',
                     style: Theme.of(
                       context,

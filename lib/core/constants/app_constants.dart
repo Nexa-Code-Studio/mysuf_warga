@@ -10,7 +10,7 @@ class AppConstants {
       ? 'http://localhost:8080/api/v1'
       : String.fromEnvironment(
           'SUBSIDIA_API_BASE_URL',
-          defaultValue: 'https://subsidia.nexacode.dev/api/v1',
+          defaultValue: 'https://sidia.nexacode.dev/api/v1',
         );
 
   static const Duration registrationPollInterval = Duration(seconds: 3);

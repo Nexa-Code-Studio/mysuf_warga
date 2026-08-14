@@ -10,6 +10,7 @@ class UserProfile {
   final bool isPinActive;
   final String pekerjaan;
   final double penghasilan;
+  final double riskScore;
 
   const UserProfile({
     required this.name,
@@ -23,6 +24,7 @@ class UserProfile {
     this.isPinActive = false,
     required this.pekerjaan,
     required this.penghasilan,
+    this.riskScore = 0.0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class UserProfile {
       isPinActive: json['isPinActive'] as bool? ?? false,
       pekerjaan: json['pekerjaan'] as String? ?? 'LAINNYA',
       penghasilan: (json['penghasilan'] as num?)?.toDouble() ?? 0.0,
+      riskScore: (json['riskScore'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

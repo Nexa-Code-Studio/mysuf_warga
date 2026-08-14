@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../shared/models/user_profile.dart';
 import '../../../../shared/providers/mock_providers.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -298,7 +299,7 @@ class SubsidyScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${remainingQuota.toStringAsFixed(0)} L',
+                    formatLiters(remainingQuota),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -319,7 +320,7 @@ class SubsidyScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${usedQuota.toStringAsFixed(0)} / ${totalQuota.toStringAsFixed(0)} L',
+                    '${formatLitersValue(usedQuota)} / ${formatLiters(totalQuota)}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -359,9 +360,13 @@ class SubsidyScreen extends ConsumerWidget {
     double totalQuota,
     NumberFormat currencyFormatter,
   ) {
-    final bonus = _jobBonus(profile.pekerjaan);
+    final bonus = _jobBonus(profile.pekerjaan) ?? 0;
     final baseQuota = 100;
-    final expectedTotal = baseQuota + (bonus ?? 0);
+    final subtotal = baseQuota + bonus;
+
+    final riskScore = profile.riskScore;
+    final riskReduction = subtotal * (riskScore / 100.0);
+    final finalQuota = totalQuota > 0 ? totalQuota : (subtotal - riskReduction);
 
     return AppCard(
       padding: const EdgeInsets.all(20),
@@ -398,29 +403,35 @@ class SubsidyScreen extends ConsumerWidget {
             ),
             _buildDetailRow(
               'Bonus Pekerjaan (${profile.pekerjaan})',
-              bonus != null ? '+$bonus L / bulan' : 'Tidak Ada',
-              valueColor: bonus != null
+              bonus > 0 ? '+$bonus L / bulan' : 'Tidak Ada',
+              valueColor: bonus > 0
                   ? const Color(0xFF2E7D32)
                   : AppColors.textSecondary,
             ),
-            const Divider(height: 24),
             _buildDetailRow(
-              'Total Kuota Bulanan',
-              '${expectedTotal} L',
+              'Subtotal Kuota',
+              '$subtotal L / bulan',
               isBold: true,
             ),
-            if (totalQuota > 0 && totalQuota != expectedTotal.toDouble())
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Kuota aktual dari server: ${totalQuota.toStringAsFixed(0)} L',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+            if (riskScore > 0 || riskReduction > 0) ...[
+              _buildDetailRow(
+                'Pemotongan Skor Risiko (${riskScore.toStringAsFixed(0)}%)',
+                '-${formatLiters(riskReduction)}',
+                valueColor: const Color(0xFFC62828),
               ),
+            ] else ...[
+              _buildDetailRow(
+                'Penyesuaian Skor Risiko',
+                '0 L (Tidak Ada)',
+                valueColor: AppColors.textSecondary,
+              ),
+            ],
+            const Divider(height: 24),
+            _buildDetailRow(
+              'Total Kuota Bulanan Akhir',
+              formatLiters(finalQuota),
+              isBold: true,
+            ),
           ] else ...[
             _buildDetailRow(
               'Status Kelayakan',

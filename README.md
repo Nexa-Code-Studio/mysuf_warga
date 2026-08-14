@@ -22,7 +22,7 @@ flutter pub get
 
 ### 3. Jalankan Aplikasi (Pilihan Environment API)
 
-Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging **https://subsidia.nexacode.dev**. Anda bisa mengubah perilaku ini saat menjalankan perintah run.
+Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging **https://sidia.nexacode.dev**. Anda bisa mengubah perilaku ini saat menjalankan perintah run.
 
 *   **Mode Staging/Produksi (Default)**
     Cukup jalankan aplikasi secara normal untuk menghubungkan ke API server cloud:

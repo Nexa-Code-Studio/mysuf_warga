@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../shared/models/vehicle.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
@@ -322,7 +323,7 @@ class _QuotaSummaryBar extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${used.toStringAsFixed(1)}L / ${quota.toStringAsFixed(1)}L',
+              '${formatLitersValue(used)} / ${formatLiters(quota)}',
               style: Theme.of(context)
                   .textTheme
                   .labelSmall
