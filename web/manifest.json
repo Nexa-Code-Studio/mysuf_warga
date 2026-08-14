@@ -1,6 +1,6 @@
 {
-    "name": "mysuf_mobile",
-    "short_name": "mysuf_mobile",
+    "name": "subsidia_mobile",
+    "short_name": "subsidia_mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -14,7 +14,7 @@ final walletProvider = FutureProvider<WalletSummary>((ref) async {
 
 final walletTransactionsProvider = FutureProvider<List<WalletTransaction>>((ref) async {
   final repository = ref.read(walletApiRepositoryProvider);
-  final result = await repository.fetchTransactions(page: 1, size: 5);
+  final result = await repository.fetchTransactions(page: 1, size: 5, filterType: 'wallet');
   final List<dynamic> itemsRaw = result['items'] as List<dynamic>? ?? [];
   return itemsRaw
       .map((e) => WalletTransaction.fromJson(e as Map<String, dynamic>))

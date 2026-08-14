@@ -86,6 +86,8 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
   }
 
   Future<void> _showPinVerificationSheet(bool isPinActive, double amount, String recipientName) async {
+
+
     _pinController.clear();
     final formKey = GlobalKey<FormState>();
 

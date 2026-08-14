@@ -133,6 +133,7 @@ class WalletApiRepository {
   Future<Map<String, dynamic>> fetchTransactions({
     required int page,
     required int size,
+    String filterType = 'all',
   }) async {
     return _withAuthorizedAction((accessToken) async {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -140,6 +141,7 @@ class WalletApiRepository {
         queryParameters: {
           'page': page,
           'size': size,
+          'filter_type': filterType,
         },
         options: Options(
           headers: {

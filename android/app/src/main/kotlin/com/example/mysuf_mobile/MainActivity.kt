@@ -1,4 +1,4 @@
-package com.example.mysuf_mobile
+package com.example.subsidia_mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

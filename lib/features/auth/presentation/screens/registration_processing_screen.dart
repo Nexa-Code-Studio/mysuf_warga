@@ -89,6 +89,13 @@ class _RegistrationProcessingScreenState
         return;
       }
       _lastRefreshAt = DateTime.now();
+      
+      debugPrint('[FRONTEND LOG] Registration status update:');
+      debugPrint('  - ID: ${attempt.id}');
+      debugPrint('  - Status: ${attempt.status}');
+      debugPrint('  - Failure Reason: ${attempt.failureReason}');
+      debugPrint('  - Failure Detail: ${attempt.failureDetail}');
+
       setState(() {
         _attempt = attempt;
         _errorMessage = null;
@@ -98,6 +105,7 @@ class _RegistrationProcessingScreenState
         _pollTimer?.cancel();
       }
     } catch (error) {
+      debugPrint('[FRONTEND LOG] Error fetching registration status: $error');
       if (!mounted) {
         return;
       }

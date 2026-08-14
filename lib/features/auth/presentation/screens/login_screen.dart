@@ -148,13 +148,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton.icon(
                           onPressed: () {
                             setState(() {
-                              _emailController.text = 'ekya@mysuf.com';
+                              _emailController.text = 'budi.pratama@sidia.com';
                               _passwordController.text = 'Password123';
                             });
                           },
                           icon: const Icon(Icons.bolt, color: Colors.amber),
                           label: const Text(
-                            'Uji Coba Cepat (ekya)',
+                            'Uji Coba Cepat (budi)',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryRed,

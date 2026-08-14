@@ -93,6 +93,7 @@ class ProfileRepository {
     });
   }
 
+
   Future<void> updateNfc(String nfcId) async {
     await _withAuthorizedAction((accessToken) async {
       await _dio.put(

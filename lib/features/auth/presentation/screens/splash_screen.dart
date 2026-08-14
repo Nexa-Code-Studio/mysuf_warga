@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'MySuF',
+              'Sidia Mobile',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,

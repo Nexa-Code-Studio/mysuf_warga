@@ -68,7 +68,7 @@ class RestrictedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               const Text(
-                'Jika Anda merasa ini adalah kekeliruan sistem atau ingin mengajukan banding, silakan hubungi Super Admin MySUF di:',
+                'Jika Anda merasa ini adalah kekeliruan sistem atau ingin mengajukan banding, silakan hubungi Super Admin Sidia di:',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -79,7 +79,7 @@ class RestrictedScreen extends StatelessWidget {
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {
-                  Clipboard.setData(const ClipboardData(text: 'superadmin@mysuf.go.id'));
+                  Clipboard.setData(const ClipboardData(text: 'superadmin@sidia.go.id'));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Email Super Admin disalin ke papan klip!'),
@@ -101,7 +101,7 @@ class RestrictedScreen extends StatelessWidget {
                       const Icon(Icons.email_outlined, color: AppColors.primaryRed, size: 20),
                       const SizedBox(width: 8),
                       const Text(
-                        'superadmin@mysuf.go.id',
+                        'superadmin@sidia.go.id',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

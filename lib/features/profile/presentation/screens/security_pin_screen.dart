@@ -244,6 +244,7 @@ class _SecurityPinScreenState extends ConsumerState<SecurityPinScreen> {
                             : const Text('Simpan PIN'),
                       ),
                     ),
+
                   ],
                 ),
               ),

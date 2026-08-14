@@ -1,6 +1,6 @@
-# MySuF Mobile (Warga Application)
+# SUBSIDIA Mobile (Warga Application)
 
-Aplikasi mobile Warga untuk ekosistem **MySuF (Smart Subsidized Fuel Ecosystem)**. Aplikasi ini dibangun menggunakan Flutter dan terintegrasi secara dinamis dengan backend untuk mengelola pemantauan kuota subsidi BBM, riwayat transaksi finansial, transfer saldo dompet digital, pengaturan keamanan PIN, dan penerimaan Push Notification real-time.
+Aplikasi mobile Warga untuk ekosistem **SUBSIDIA (Smart Subsidized Fuel Ecosystem)**. Aplikasi ini dibangun menggunakan Flutter dan terintegrasi secara dinamis dengan backend untuk mengelola pemantauan kuota subsidi BBM, riwayat transaksi finansial, transfer saldo dompet digital, pengaturan keamanan PIN, dan penerimaan Push Notification real-time.
 
 ---
 
@@ -22,7 +22,7 @@ flutter pub get
 
 ### 3. Jalankan Aplikasi (Pilihan Environment API)
 
-Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging **https://mysuf.nexacode.dev**. Anda bisa mengubah perilaku ini saat menjalankan perintah run.
+Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging **https://subsidia.nexacode.dev**. Anda bisa mengubah perilaku ini saat menjalankan perintah run.
 
 *   **Mode Staging/Produksi (Default)**
     Cukup jalankan aplikasi secara normal untuk menghubungkan ke API server cloud:
@@ -39,9 +39,9 @@ Aplikasi mobile dikonfigurasi untuk secara default terhubung ke server staging *
     > Pastikan Anda telah mengaktifkan ADB reverse (`adb reverse tcp:8080 tcp:8080`) jika menggunakan Emulator Android agar port `8080` lokal Anda dapat diakses oleh perangkat emulator.
 
 *   **Custom API URL**
-    Gunakan flag `--dart-define=MYSUF_API_BASE_URL=<custom_url>` jika Anda ingin menggunakan custom IP atau port tertentu (misalnya emulator Android tanpa adb reverse):
+    Gunakan flag `--dart-define=SUBSIDIA_API_BASE_URL=<custom_url>` jika Anda ingin menggunakan custom IP atau port tertentu (misalnya emulator Android tanpa adb reverse):
     ```bash
-    flutter run --dart-define=MYSUF_API_BASE_URL=http://10.0.2.2:8080/api/v1
+    flutter run --dart-define=SUBSIDIA_API_BASE_URL=http://10.0.2.2:8080/api/v1
     ```
 
 ---

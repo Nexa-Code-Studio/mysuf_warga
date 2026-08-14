@@ -126,7 +126,7 @@ class _TransactionHistoryScreenState
     try {
       final repository = ref.read(walletApiRepositoryProvider);
       final result =
-          await repository.fetchTransactions(page: _page, size: _size);
+          await repository.fetchTransactions(page: _page, size: _size, filterType: 'fuel');
 
       final List<dynamic> itemsRaw =
           result['items'] as List<dynamic>? ?? [];

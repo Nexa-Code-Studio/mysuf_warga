@@ -70,7 +70,7 @@ class HelpCenterScreen extends StatelessWidget {
                     leading: const Icon(Icons.email_outlined,
                         color: AppColors.primaryRed),
                     title: const Text('Email bantuan'),
-                    subtitle: const Text('support@mysuf.id'),
+                    subtitle: const Text('support@sidia.id'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {},
                   ),

@@ -9,11 +9,11 @@ import 'routes/app_router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
-  runApp(const ProviderScope(child: MySuFApp()));
+  runApp(const ProviderScope(child: SUBSIDIAApp()));
 }
 
-class MySuFApp extends ConsumerWidget {
-  const MySuFApp({super.key});
+class SUBSIDIAApp extends ConsumerWidget {
+  const SUBSIDIAApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,7 +24,7 @@ class MySuFApp extends ConsumerWidget {
       splitScreenMode: true,
       builder: (_, __) {
         return MaterialApp.router(
-          title: 'MySuF',
+          title: 'Sidia Mobile',
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
           routerConfig: router,
